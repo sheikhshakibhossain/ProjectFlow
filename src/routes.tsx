@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Projects } from './pages/Projects';
 import { CreateProject } from './pages/CreateProject';
+import { AddTask } from './pages/AddTask';
 import { ProjectDetails } from './pages/ProjectDetails';
 import { Feedback } from './pages/Feedback';
 import { ProfileSettings } from './pages/Settings';
@@ -38,6 +39,7 @@ export const router = createBrowserRouter([
       { path: 'dashboard', Component: Dashboard },
       { path: 'projects', Component: Projects },
       { path: 'projects/create', Component: CreateProject },
+      { path: 'projects/:id/add-task', Component: AddTask },
       { path: 'projects/:id', Component: ProjectDetails },
       { path: 'feedback', Component: Feedback },
       { path: 'profile', Component: ProfileSettings },

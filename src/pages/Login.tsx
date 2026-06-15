@@ -6,14 +6,24 @@ import { FolderKanban } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('student');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(email || 'alex@example.com', role);
-    navigate('/dashboard');
+    setError('');
+    setIsSubmitting(true);
+    try {
+      await login(email, password);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -37,28 +47,30 @@ export const Login: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium leading-none">Email</label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="alex@example.com" 
+              <Input
+                id="email"
+                type="email"
+                placeholder="shakib@gmail.com"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="role" className="text-sm font-medium leading-none">Login As (Demo)</label>
-              <select 
-                id="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-              >
-                <option value="student">Student</option>
-                <option value="team_lead">Team Lead</option>
-                <option value="teacher">Teacher</option>
-              </select>
+              <label htmlFor="password" className="text-sm font-medium leading-none">Password</label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
-            <Button type="submit" className="w-full mt-4">Sign In</Button>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <Button type="submit" className="w-full mt-4" disabled={isSubmitting}>
+              {isSubmitting ? 'Signing in...' : 'Sign In'}
+            </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 border-t border-slate-100 pt-6">
@@ -70,14 +82,14 @@ export const Login: React.FC = () => {
           </div>
         </CardFooter>
       </Card>
-      
+
       {/* Demo helper */}
       <div className="mt-8 p-4 bg-indigo-50 rounded-xl max-w-md w-full text-sm text-indigo-800">
-        <p className="font-semibold mb-2">Demo Credentials:</p>
+        <p className="font-semibold mb-2">Demo Credentials (password: password123):</p>
         <ul className="list-disc pl-5 space-y-1">
-          <li>Student: alex@example.com</li>
-          <li>Team Lead: sarah@example.com</li>
-          <li>Teacher: emily@example.com</li>
+          <li>Student: shakib@gmail.com</li>
+          <li>Team Lead: shaif@gmail.com</li>
+          <li>Teacher: tasmia@gmail.com</li>
         </ul>
       </div>
     </div>

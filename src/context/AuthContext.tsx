@@ -1,47 +1,60 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, MOCK_USERS } from '../lib/mockData';
+import { api, getToken, setToken, clearToken } from '../lib/api';
+import type { Role, User } from '../lib/types';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, role?: string) => void;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, role: Role) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Mock initial state: logged in as Student
-  const [user, setUser] = useState<User | null>(MOCK_USERS[0]);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = (email: string, role?: string) => {
-    // Find a mock user by email or just pick one based on role for demo purposes
-    let found = MOCK_USERS.find(u => u.email === email);
-    if (!found && role) {
-      found = MOCK_USERS.find(u => u.role === role);
+  const refreshUser = async () => {
+    if (!getToken()) {
+      setUser(null);
+      return;
     }
-    if (!found) {
-       found = MOCK_USERS[0];
+    try {
+      const { user } = await api.me();
+      setUser(user);
+    } catch {
+      clearToken();
+      setUser(null);
     }
-    setUser(found);
-    localStorage.setItem('auth_user_id', found.id);
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('auth_user_id');
   };
 
   useEffect(() => {
-    const storedId = localStorage.getItem('auth_user_id');
-    if (storedId) {
-      const found = MOCK_USERS.find(u => u.id === storedId);
-      if (found) setUser(found);
-    }
+    refreshUser().finally(() => setIsLoading(false));
   }, []);
 
+  const login = async (email: string, password: string) => {
+    const { token, user } = await api.login(email, password);
+    setToken(token);
+    setUser(user);
+  };
+
+  const signup = async (name: string, email: string, password: string, role: Role) => {
+    const { token, user } = await api.signup(name, email, password, role);
+    setToken(token);
+    setUser(user);
+  };
+
+  const logout = () => {
+    clearToken();
+    setUser(null);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, refreshUser, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

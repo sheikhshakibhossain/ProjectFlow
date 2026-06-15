@@ -3,48 +3,77 @@
 
 A web platform that helps students manage and monitor project progress and record feedback from teachers. Team leads can create projects, break them down into tasks, and assign responsibilities to individual members while members can update their task progress.
 
-## Quick Start
+The app has two parts:
+- **Frontend** — React + Vite (in the project root)
+- **Backend** — Node + Express + SQLite (in `backend/`)
 
-Requirements
-- Node.js 20+ is recommended (some dependencies request Node >=20). Node 18 may work but can show warnings.
-- npm (comes with Node) or pnpm.
+## Requirements
+- Node.js 20+
 
-Install and run (development)
-1. Install dependencies:
+## Setup
+
+### Quick start (both servers)
 
 ```bash
-cd /home/neo/codes/ProjectFlow
-npm install
+./start.sh
 ```
 
-2. Start the dev server:
+This installs nothing by itself — run `npm install` in both the project root and `backend/` first (see below). Once both are installed, `./start.sh` starts the backend and frontend together and prints their URLs. Press `Ctrl+C` to stop both.
+
+### 1. Backend
 
 ```bash
+cd backend
+npm install
+npm start
+```
+
+This starts the API server on `http://localhost:4001`. A SQLite database (`backend/data.sqlite`) is created and seeded automatically on first run with demo users, teams, projects, and tasks.
+
+### 2. Frontend
+
+In a separate terminal, from the project root:
+
+```bash
+npm install
 npm run dev
 ```
 
-Open: http://localhost:5173/
+Open: http://localhost:5173
 
-Build for production
+The dev server proxies `/api` requests to the backend, so make sure the backend is running first.
+
+## Demo accounts
+
+All demo accounts use the password `password123`.
+
+| Role | Email |
+| --- | --- |
+| Student | shakib@gmail.com |
+| Team Lead | shaif@gmail.com |
+| Teacher | tasmia@gmail.com |
+
+You can also sign up as a new user from the Signup page.
+
+## Build for production
 
 ```bash
 npm run build
-# production build output is in the `dist/` folder
+# output is in the `dist/` folder
 ```
 
-Notes
-- If you see engine warnings during `npm install` (for example, packages requesting Node >=20), upgrade your Node version to 20+ to remove the warnings.
-- The project uses Vite and Tailwind CSS. If you prefer `pnpm`, you can run `pnpm install` instead of `npm install`.
+## Resetting the database
 
-Files of interest
-- `src/main.tsx` — app entry.
-- `vite.config.ts` — vite config.
-- `src/app` — UI components and pages.
+To start over with fresh seed data, stop the backend and delete the database files, then restart:
 
-Troubleshooting
-- If dev server fails to start, run `rm -rf node_modules package-lock.json` and reinstall.
-- Run `npm audit` and `npm audit fix` to address vulnerabilities.
+```bash
+cd backend
+rm -f data.sqlite data.sqlite-journal data.sqlite-shm data.sqlite-wal
+npm start
+```
 
-If you want, I can:
-- Run the dev server now (already started in this session).
-- Upgrade package versions or switch to `pnpm`/`node 20` instructions.
+## Troubleshooting
+
+- **Frontend can't reach the API / network errors**: make sure the backend is running on port 4001 before starting the frontend.
+- **Dev server fails to start**: run `rm -rf node_modules package-lock.json` and reinstall.
+- **Port already in use**: the backend listens on port 4001 by default — set `PORT=<number>` to use a different port (and update the proxy target in `vite.config.ts` to match).

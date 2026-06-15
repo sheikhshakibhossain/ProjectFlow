@@ -38,6 +38,12 @@ coverage/
 .eslintcache
 /.turbo/
 
+## SQLite
+backend/data.sqlite
+backend/data.sqlite-journal
+backend/data.sqlite-shm
+backend/data.sqlite-wal
+
 # Optional lock files (uncomment if you commit them)
 # package-lock.json
 # pnpm-lock.yaml

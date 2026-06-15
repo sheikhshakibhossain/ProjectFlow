@@ -1,34 +1,69 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
-import { 
-  LayoutDashboard, 
-  FolderKanban, 
-  MessageSquare, 
-  Settings, 
-  LogOut, 
-  Bell, 
+import {
+  LayoutDashboard,
+  FolderKanban,
+  MessageSquare,
+  Settings,
+  LogOut,
+  Bell,
   Menu,
-  X,
-  Check
+  X
 } from 'lucide-react';
 import { cn } from './ui';
-import { MOCK_NOTIFICATIONS } from '../lib/mockData';
+import { api, subscribeToNotifications } from '../lib/api';
+import type { Notification } from '../lib/types';
 
 export const Layout: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const navigate = useNavigate();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    api.getNotifications().then(({ notifications }) => setNotifications(notifications)).catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const unsubscribe = subscribeToNotifications((notification) => {
+      setNotifications(prev => [notification, ...prev.filter(n => n.id !== notification.id)]);
+    });
+    return unsubscribe;
+  }, [user]);
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate('/login');
+    }
+  }, [isLoading, user, navigate]);
 
   if (!user) {
-    navigate('/login');
     return null;
   }
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const markAllRead = async () => {
+    try {
+      const { notifications } = await api.markAllNotificationsRead();
+      setNotifications(notifications);
+    } catch {}
+  };
+
+  const respondToProject = async (notification: Notification, action: 'accept' | 'reject') => {
+    if (!notification.relatedProjectId) return;
+    try {
+      await api.respondToProject(notification.relatedProjectId, action);
+      const { notification: updated } = await api.markNotificationRead(notification.id);
+      setNotifications(prev => prev.map(n => n.id === updated.id ? updated : n));
+    } catch {}
   };
 
   const navItems = [
@@ -38,21 +73,21 @@ export const Layout: React.FC = () => {
     { label: 'Feedback', icon: MessageSquare, path: '/feedback' },
   ];
 
-  const unreadCount = MOCK_NOTIFICATIONS.filter(n => !n.isRead && n.userId === user.id).length;
-  const userNotifications = MOCK_NOTIFICATIONS.filter(n => n.userId === user.id);
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const userNotifications = notifications;
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden text-slate-900 font-sans">
       {/* Mobile sidebar overlay */}
       {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/50 md:hidden" 
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside 
+      <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out md:relative md:translate-x-0 flex flex-col",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -77,8 +112,8 @@ export const Layout: React.FC = () => {
               to={item.path}
               className={({ isActive }) => cn(
                 "flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-sm font-medium",
-                isActive 
-                  ? "bg-indigo-50 text-indigo-600" 
+                isActive
+                  ? "bg-indigo-50 text-indigo-600"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               )}
               onClick={() => setSidebarOpen(false)}
@@ -94,8 +129,8 @@ export const Layout: React.FC = () => {
             to="/profile"
             className={({ isActive }) => cn(
               "flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-sm font-medium mb-1",
-              isActive 
-                ? "bg-indigo-50 text-indigo-600" 
+              isActive
+                ? "bg-indigo-50 text-indigo-600"
                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             )}
             onClick={() => setSidebarOpen(false)}
@@ -118,7 +153,7 @@ export const Layout: React.FC = () => {
         {/* Top Navigation */}
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0 relative">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg"
               onClick={() => setSidebarOpen(true)}
             >
@@ -132,7 +167,7 @@ export const Layout: React.FC = () => {
           <div className="flex items-center gap-4">
             {/* Notifications Dropdown */}
             <div className="relative">
-              <button 
+              <button
                 className="p-2 text-slate-500 hover:bg-slate-100 rounded-full relative"
                 onClick={() => setNotificationsOpen(!isNotificationsOpen)}
               >
@@ -148,7 +183,7 @@ export const Layout: React.FC = () => {
                   <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-lg border border-slate-200 z-20 overflow-hidden">
                     <div className="px-4 py-3 border-b border-slate-200 flex justify-between items-center bg-slate-50">
                       <span className="font-semibold text-sm">Notifications</span>
-                      <button className="text-xs text-indigo-600 font-medium hover:underline">Mark all read</button>
+                      <button onClick={markAllRead} className="text-xs text-indigo-600 font-medium hover:underline">Mark all read</button>
                     </div>
                     <div className="max-h-80 overflow-y-auto">
                       {userNotifications.length === 0 ? (
@@ -157,9 +192,25 @@ export const Layout: React.FC = () => {
                         userNotifications.map(notification => (
                           <div key={notification.id} className={cn("p-4 border-b border-slate-100 flex gap-3 hover:bg-slate-50 transition-colors", !notification.isRead && "bg-indigo-50/50")}>
                             <div className={cn("w-2 h-2 mt-2 rounded-full shrink-0", !notification.isRead ? "bg-indigo-600" : "bg-transparent")} />
-                            <div>
+                            <div className="flex-1">
                               <p className="text-sm font-medium text-slate-900">{notification.title}</p>
                               <p className="text-xs text-slate-500 mt-0.5">{notification.message}</p>
+                              {notification.type === 'project_request' && !notification.isRead && (
+                                <div className="flex gap-2 mt-2">
+                                  <button
+                                    onClick={() => respondToProject(notification, 'accept')}
+                                    className="px-3 py-1 rounded-lg text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700"
+                                  >
+                                    Accept
+                                  </button>
+                                  <button
+                                    onClick={() => respondToProject(notification, 'reject')}
+                                    className="px-3 py-1 rounded-lg text-xs font-medium bg-white border border-slate-200 text-slate-700 hover:bg-slate-100"
+                                  >
+                                    Reject
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))

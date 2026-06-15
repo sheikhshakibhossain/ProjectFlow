@@ -1,12 +1,50 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '../ui';
-import { MOCK_PROJECTS, MOCK_FEEDBACK } from '../../lib/mockData';
-import { MessageSquarePlus, GraduationCap, Clock } from 'lucide-react';
+import { api } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
+import type { Feedback, Project, User } from '../../lib/types';
+import { MessageSquarePlus, GraduationCap, Clock, Inbox, Check, X } from 'lucide-react';
 import { Link } from 'react-router';
 
 export const TeacherDashboard: React.FC = () => {
-  const supervisedProjects = MOCK_PROJECTS; // Assume teacher supervises all in mock
-  
+  const { user } = useAuth();
+  const [supervisedProjects, setSupervisedProjects] = useState<Project[]>([]);
+  const [feedback, setFeedback] = useState<Feedback[]>([]);
+  const [requesters, setRequesters] = useState<Record<string, User>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [actioningId, setActioningId] = useState<string | null>(null);
+  const [requestError, setRequestError] = useState('');
+
+  useEffect(() => {
+    Promise.all([api.getProjects(), api.getFeedback(), api.getUsersByRole('team_lead')])
+      .then(([{ projects }, { feedback }, { users }]) => {
+        setSupervisedProjects(projects);
+        setFeedback(feedback);
+        setRequesters(Object.fromEntries(users.map(u => [u.id, u])));
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  if (isLoading) {
+    return <div className="text-center py-12 text-slate-500">Loading dashboard...</div>;
+  }
+
+  const projectRequests = supervisedProjects.filter(p => p.status === 'dormant' && p.supervisorId === user?.id);
+
+  const handleRespond = async (id: string, action: 'accept' | 'reject') => {
+    setRequestError('');
+    setActioningId(id);
+    try {
+      const { project } = await api.respondToProject(id, action);
+      setSupervisedProjects(prev => prev.map(p => p.id === id ? project : p));
+    } catch (err) {
+      setRequestError(err instanceof Error ? err.message : 'Failed to respond to project request');
+    } finally {
+      setActioningId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -23,16 +61,79 @@ export const TeacherDashboard: React.FC = () => {
         </Card>
         <Card>
           <CardContent className="p-6 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center">
+              <Inbox className="w-6 h-6 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500">Pending Requests</p>
+              <p className="text-2xl font-bold text-slate-900">{projectRequests.length}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center">
               <MessageSquarePlus className="w-6 h-6 text-emerald-600" />
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500">Feedback Given</p>
-              <p className="text-2xl font-bold text-slate-900">{MOCK_FEEDBACK.length}</p>
+              <p className="text-2xl font-bold text-slate-900">{feedback.length}</p>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            Project Requests
+            {projectRequests.length > 0 && <Badge variant="warning">{projectRequests.length}</Badge>}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {requestError && <div className="p-3 bg-red-50 text-red-700 rounded-xl text-sm">{requestError}</div>}
+          {projectRequests.length === 0 ? (
+            <p className="text-sm text-slate-500 py-2">No pending project requests.</p>
+          ) : (
+            projectRequests.map((project) => (
+              <div key={project.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-slate-200">
+                <div className="min-w-0">
+                  <Link to={`/projects/${project.id}`} className="font-medium text-slate-900 hover:text-indigo-600">
+                    {project.title}
+                  </Link>
+                  <p className="text-sm text-slate-500 mt-0.5">
+                    {project.course}
+                    {requesters[project.createdBy || ''] && ` · Requested by ${requesters[project.createdBy || ''].name}`}
+                  </p>
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    {project.deadline}
+                  </div>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    onClick={() => handleRespond(project.id, 'accept')}
+                    disabled={actioningId === project.id}
+                  >
+                    <Check className="w-4 h-4 mr-1.5" />
+                    Accept
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleRespond(project.id, 'reject')}
+                    disabled={actioningId === project.id}
+                  >
+                    <X className="w-4 h-4 mr-1.5" />
+                    Reject
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -71,6 +172,10 @@ export const TeacherDashboard: React.FC = () => {
                         <Badge variant="success">Active</Badge>
                       ) : project.status === 'completed' ? (
                         <Badge variant="default">Completed</Badge>
+                      ) : project.status === 'dormant' ? (
+                        <Badge variant="warning">Dormant</Badge>
+                      ) : project.status === 'rejected' ? (
+                        <Badge variant="destructive">Rejected</Badge>
                       ) : (
                         <Badge variant="secondary">On Hold</Badge>
                       )}

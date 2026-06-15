@@ -34,9 +34,9 @@ export const StudentDashboard: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     switch(status) {
-      case 'done': return <CheckCircle2 className="w-5 h-5 text-emerald-500" />;
-      case 'in_progress': return <PlayCircle className="w-5 h-5 text-amber-500" />;
-      default: return <Clock className="w-5 h-5 text-slate-400" />;
+      case 'done': return <CheckCircle2 className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />;
+      case 'in_progress': return <PlayCircle className="w-5 h-5 text-amber-500 dark:text-amber-400" />;
+      default: return <Clock className="w-5 h-5 text-slate-400 dark:text-slate-500" />;
     }
   };
 
@@ -49,7 +49,7 @@ export const StudentDashboard: React.FC = () => {
   };
 
   if (isLoading) {
-    return <div className="text-center py-12 text-slate-500">Loading dashboard...</div>;
+    return <div className="text-center py-12 text-slate-500 dark:text-slate-400">Loading dashboard...</div>;
   }
 
   return (
@@ -57,41 +57,41 @@ export const StudentDashboard: React.FC = () => {
       {/* Task Summary */}
       <div className="lg:col-span-2 space-y-6">
         <div className="grid grid-cols-3 gap-4">
-          <Card className="bg-white">
+          <Card className="bg-white dark:bg-slate-900">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-slate-500">To Do</p>
-                  <p className="text-3xl font-bold text-slate-900">{todoTasks.length}</p>
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">To Do</p>
+                  <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{todoTasks.length}</p>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-slate-600" />
+                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white">
+          <Card className="bg-white dark:bg-slate-900">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-amber-600">In Progress</p>
-                  <p className="text-3xl font-bold text-amber-600">{inProgressTasks.length}</p>
+                  <p className="text-sm font-medium text-amber-600 dark:text-amber-400">In Progress</p>
+                  <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">{inProgressTasks.length}</p>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center">
-                  <PlayCircle className="w-5 h-5 text-amber-600" />
+                <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
+                  <PlayCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white">
+          <Card className="bg-white dark:bg-slate-900">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-emerald-600">Done</p>
-                  <p className="text-3xl font-bold text-emerald-600">{doneTasks.length}</p>
+                  <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Done</p>
+                  <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{doneTasks.length}</p>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
               </div>
             </CardContent>
@@ -108,15 +108,15 @@ export const StudentDashboard: React.FC = () => {
           <CardContent>
             <div className="space-y-4">
               {myTasks.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">No tasks assigned to you.</div>
+                <div className="text-center py-8 text-slate-500 dark:text-slate-400">No tasks assigned to you.</div>
               ) : (
                 myTasks.map(task => (
-                  <div key={task.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50 hover:bg-slate-100/50 transition-colors">
+                  <div key={task.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors">
                     <div className="flex items-center gap-4">
                       {getStatusIcon(task.status)}
                       <div>
-                        <p className="font-medium text-slate-900">{task.title}</p>
-                        <p className="text-sm text-slate-500 flex items-center gap-2 mt-1">
+                        <p className="font-medium text-slate-900 dark:text-slate-100">{task.title}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-1">
                           <AlertCircle className="w-3.5 h-3.5" />
                           Due: {task.deadline}
                         </p>
@@ -141,14 +141,14 @@ export const StudentDashboard: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             {myProjects.length === 0 ? (
-              <div className="text-center py-4 text-slate-500 text-sm">No projects yet.</div>
+              <div className="text-center py-4 text-slate-500 dark:text-slate-400 text-sm">No projects yet.</div>
             ) : myProjects.map(project => (
               <div key={project.id} className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="font-medium text-slate-900">{project.title}</span>
-                  <span className="text-slate-500">{project.progress}%</span>
+                  <span className="font-medium text-slate-900 dark:text-slate-100">{project.title}</span>
+                  <span className="text-slate-500 dark:text-slate-400">{project.progress}%</span>
                 </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-indigo-600 rounded-full transition-all duration-500"
                     style={{ width: `${project.progress}%` }}

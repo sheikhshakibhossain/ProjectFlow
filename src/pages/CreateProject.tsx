@@ -57,8 +57,8 @@ export const CreateProject: React.FC = () => {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create New Project</h1>
-          <p className="text-slate-500 mt-1">Set up a new academic project and assign your team.</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Create New Project</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Set up a new academic project and assign your team.</p>
         </div>
       </div>
 
@@ -88,7 +88,7 @@ export const CreateProject: React.FC = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium leading-none">Description</label>
               <textarea
-                className="flex w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 min-h-[100px] resize-y"
+                className="flex w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm ring-offset-white dark:ring-offset-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 min-h-[100px] resize-y"
                 placeholder="Describe the project goals and requirements..."
                 value={description}
                 onChange={e => setDescription(e.target.value)}
@@ -111,26 +111,26 @@ export const CreateProject: React.FC = () => {
                 required
                 value={supervisorId}
                 onChange={e => setSupervisorId(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                className="flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm ring-offset-white dark:ring-offset-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               >
                 <option value="">Select a supervisor...</option>
                 {supervisors.map(s => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
-              <p className="text-xs text-slate-400">The project will stay dormant until your supervisor accepts the request.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">The project will stay dormant until your supervisor accepts the request.</p>
             </div>
 
             <div className="space-y-3">
               <label className="text-sm font-medium leading-none">Team Members</label>
               {teamMembers.length === 0 ? (
-                <p className="text-sm text-slate-500">No team members found yet.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">No team members found yet.</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {teamMembers.map(member => (
                     <label
                       key={member.id}
-                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${selectedMembers.includes(member.id) ? 'border-indigo-600 bg-indigo-50/50' : 'border-slate-200 hover:bg-slate-50'}`}
+                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${selectedMembers.includes(member.id) ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-500/10' : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60'}`}
                     >
                       <input
                         type="checkbox"
@@ -140,19 +140,19 @@ export const CreateProject: React.FC = () => {
                       />
                       <img src={member.avatar} alt={member.name} className="w-8 h-8 rounded-full" />
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-900">{member.name}</p>
-                        <p className="text-xs text-slate-500 capitalize">{member.role.replace('_', ' ')}</p>
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{member.name}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{member.role.replace('_', ' ')}</p>
                       </div>
                     </label>
                   ))}
                 </div>
               )}
-              <p className="text-xs text-slate-400">All members of your team automatically have access to projects you create.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">All members of your team automatically have access to projects you create.</p>
             </div>
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
               <Button type="button" variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Creating...' : 'Create Project'}</Button>
             </div>

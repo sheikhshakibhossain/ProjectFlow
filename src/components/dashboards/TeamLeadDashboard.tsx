@@ -52,7 +52,7 @@ export const TeamLeadDashboard: React.FC = () => {
   }));
 
   if (isLoading) {
-    return <div className="text-center py-12 text-slate-500">Loading dashboard...</div>;
+    return <div className="text-center py-12 text-slate-500 dark:text-slate-400">Loading dashboard...</div>;
   }
 
   return (
@@ -62,22 +62,22 @@ export const TeamLeadDashboard: React.FC = () => {
         <Card>
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-500">Active Projects</p>
-              <p className="text-3xl font-bold text-slate-900 mt-1">{myProjects.length}</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Active Projects</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-slate-100 mt-1">{myProjects.length}</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center">
-              <LayoutList className="w-6 h-6 text-indigo-600" />
+            <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
+              <LayoutList className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-500">Team Members</p>
-              <p className="text-3xl font-bold text-slate-900 mt-1">{teamMembers.length}</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Team Members</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-slate-100 mt-1">{teamMembers.length}</p>
             </div>
-            <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center">
-              <Users className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center">
+              <Users className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
           </CardContent>
         </Card>

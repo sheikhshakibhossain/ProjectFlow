@@ -32,7 +32,7 @@ export const Signup: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-800 flex flex-col justify-center items-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">Create an account</CardTitle>
@@ -65,22 +65,22 @@ export const Signup: React.FC = () => {
               <select
                 value={role}
                 onChange={e => setRole(e.target.value as Role)}
-                className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                className="flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm ring-offset-white dark:ring-offset-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               >
                 <option value="student">Student</option>
                 <option value="team_lead">Team Lead</option>
                 <option value="teacher">Teacher</option>
               </select>
             </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
             <Button type="submit" className="w-full mt-4" disabled={isSubmitting}>
               {isSubmitting ? 'Creating account...' : 'Sign Up'}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4 border-t border-slate-100 pt-6">
-          <div className="text-sm text-slate-500 text-center">
-            Already have an account? <Link to="/login" className="text-indigo-600 hover:underline">Sign in</Link>
+        <CardFooter className="flex flex-col space-y-4 border-t border-slate-100 dark:border-slate-800 pt-6">
+          <div className="text-sm text-slate-500 dark:text-slate-400 text-center">
+            Already have an account? <Link to="/login" className="text-indigo-600 dark:text-indigo-400 hover:underline">Sign in</Link>
           </div>
         </CardFooter>
       </Card>

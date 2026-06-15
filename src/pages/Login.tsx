@@ -27,13 +27,13 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-800 flex flex-col justify-center items-center p-4">
       <div className="mb-8 flex flex-col items-center">
         <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center mb-4 shadow-sm">
           <FolderKanban className="w-7 h-7 text-white" />
         </div>
-        <h1 className="text-3xl font-bold text-slate-900">ProjectFlow</h1>
-        <p className="text-slate-500 mt-2">Manage your academic projects seamlessly</p>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">ProjectFlow</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-2">Manage your academic projects seamlessly</p>
       </div>
 
       <Card className="w-full max-w-md">
@@ -67,24 +67,24 @@ export const Login: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
             <Button type="submit" className="w-full mt-4" disabled={isSubmitting}>
               {isSubmitting ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4 border-t border-slate-100 pt-6">
-          <div className="text-sm text-slate-500 text-center">
-            Don't have an account? <Link to="/signup" className="text-indigo-600 hover:underline">Sign up</Link>
+        <CardFooter className="flex flex-col space-y-4 border-t border-slate-100 dark:border-slate-800 pt-6">
+          <div className="text-sm text-slate-500 dark:text-slate-400 text-center">
+            Don't have an account? <Link to="/signup" className="text-indigo-600 dark:text-indigo-400 hover:underline">Sign up</Link>
           </div>
-          <div className="text-sm text-slate-500 text-center">
+          <div className="text-sm text-slate-500 dark:text-slate-400 text-center">
             <Link to="/forgot-password" className="hover:underline">Forgot password?</Link>
           </div>
         </CardFooter>
       </Card>
 
       {/* Demo helper */}
-      <div className="mt-8 p-4 bg-indigo-50 rounded-xl max-w-md w-full text-sm text-indigo-800">
+      <div className="mt-8 p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl max-w-md w-full text-sm text-indigo-800 dark:text-indigo-300">
         <p className="font-semibold mb-2">Demo Credentials (password: password123):</p>
         <ul className="list-disc pl-5 space-y-1">
           <li>Student: shakib@gmail.com</li>

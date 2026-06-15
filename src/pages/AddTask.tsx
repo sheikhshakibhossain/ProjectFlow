@@ -34,13 +34,13 @@ export const AddTask: React.FC = () => {
   }, [id]);
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-full pt-12 text-slate-500">Loading...</div>;
+    return <div className="flex items-center justify-center h-full pt-12 text-slate-500 dark:text-slate-400">Loading...</div>;
   }
 
   if (notFound || !project) return (
     <div className="flex flex-col items-center justify-center h-full pt-12">
-      <h2 className="text-xl font-semibold text-slate-900 mb-2">Project Not Found</h2>
-      <p className="text-slate-500 mb-6">The project you're looking for doesn't exist.</p>
+      <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">Project Not Found</h2>
+      <p className="text-slate-500 dark:text-slate-400 mb-6">The project you're looking for doesn't exist.</p>
       <Button asChild>
         <Link to="/projects">Return to Projects</Link>
       </Button>
@@ -75,10 +75,10 @@ export const AddTask: React.FC = () => {
         </Button>
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Add Task</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Add Task</h1>
             <Badge variant={project.status === 'active' ? 'success' : 'default'}>{project.status}</Badge>
           </div>
-          <p className="text-slate-500">{project.title}</p>
+          <p className="text-slate-500 dark:text-slate-400">{project.title}</p>
         </div>
       </div>
 
@@ -98,7 +98,7 @@ export const AddTask: React.FC = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium leading-none">Description</label>
               <textarea
-                className="flex w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 min-h-[100px] resize-y"
+                className="flex w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm ring-offset-white dark:ring-offset-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 min-h-[100px] resize-y"
                 placeholder="Describe the task scope and expected output..."
                 value={description}
                 onChange={e => setDescription(e.target.value)}
@@ -109,7 +109,7 @@ export const AddTask: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium leading-none">Assignee</label>
                 <select
-                  className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                  className="flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 text-sm ring-offset-white dark:ring-offset-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                   value={assigneeId}
                   onChange={e => setAssigneeId(e.target.value)}
                 >
@@ -122,7 +122,7 @@ export const AddTask: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium leading-none">Priority</label>
                 <select
-                  className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                  className="flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 text-sm ring-offset-white dark:ring-offset-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                   value={priority}
                   onChange={e => setPriority(e.target.value as 'low' | 'medium' | 'high')}
                 >
@@ -143,9 +143,9 @@ export const AddTask: React.FC = () => {
               />
             </div>
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
               <Button type="button" variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Creating...' : 'Create Task'}</Button>
             </div>

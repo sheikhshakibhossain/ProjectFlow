@@ -88,8 +88,8 @@ export const ProfileSettings: React.FC = () => {
   return (
     <div className="max-w-4xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Profile & Settings</h1>
-        <p className="text-slate-500 mt-1">Manage your account preferences and personal information.</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Profile & Settings</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Manage your account preferences and personal information.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -115,27 +115,27 @@ export const ProfileSettings: React.FC = () => {
                   onChange={handleAvatarChange}
                 />
               </div>
-              <h3 className="text-lg font-bold text-slate-900">{user.name}</h3>
-              <p className="text-slate-500 text-sm mb-3">{user.email}</p>
-              <Badge variant="secondary" className="capitalize px-3 py-1 text-sm bg-indigo-50 text-indigo-700 border-indigo-100">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{user.name}</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">{user.email}</p>
+              <Badge variant="secondary" className="capitalize px-3 py-1 text-sm bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20">
                 {user.role.replace('_', ' ')}
               </Badge>
-              {avatarError && <p className="text-xs text-red-600 mt-3">{avatarError}</p>}
-              {isUploadingAvatar && <p className="text-xs text-slate-500 mt-3">Uploading photo...</p>}
+              {avatarError && <p className="text-xs text-red-600 dark:text-red-400 mt-3">{avatarError}</p>}
+              {isUploadingAvatar && <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">Uploading photo...</p>}
             </CardContent>
           </Card>
 
           <Card>
             <nav className="flex flex-col p-2">
-              <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-indigo-700 bg-indigo-50 rounded-xl transition-colors">
+              <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl transition-colors">
                 <UserIcon className="w-5 h-5" />
                 Personal Info
               </button>
-              <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">
+              <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl transition-colors">
                 <Bell className="w-5 h-5" />
                 Notifications
               </button>
-              <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">
+              <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl transition-colors">
                 <Shield className="w-5 h-5" />
                 Security
               </button>
@@ -152,37 +152,37 @@ export const ProfileSettings: React.FC = () => {
               <form onSubmit={handleSave} className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium leading-none text-slate-700">Full Name</label>
+                    <label className="text-sm font-medium leading-none text-slate-700 dark:text-slate-300">Full Name</label>
                     <Input value={name} onChange={e => setName(e.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium leading-none text-slate-700">Email Address</label>
+                    <label className="text-sm font-medium leading-none text-slate-700 dark:text-slate-300">Email Address</label>
                     <Input value={email} onChange={e => setEmail(e.target.value)} type="email" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium leading-none text-slate-700">Role</label>
-                    <Input defaultValue={user.role.replace('_', ' ')} disabled className="capitalize bg-slate-50" />
+                    <label className="text-sm font-medium leading-none text-slate-700 dark:text-slate-300">Role</label>
+                    <Input defaultValue={user.role.replace('_', ' ')} disabled className="capitalize bg-slate-50 dark:bg-slate-800" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium leading-none text-slate-700">Team / Department</label>
-                    <Input defaultValue={user.teamId ? `Team ${user.teamId.replace('t', '')}` : 'Computer Science Dept'} disabled className="bg-slate-50" />
+                    <label className="text-sm font-medium leading-none text-slate-700 dark:text-slate-300">Team / Department</label>
+                    <Input defaultValue={user.teamId ? `Team ${user.teamId.replace('t', '')}` : 'Computer Science Dept'} disabled className="bg-slate-50 dark:bg-slate-800" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none text-slate-700">Bio</label>
+                  <label className="text-sm font-medium leading-none text-slate-700 dark:text-slate-300">Bio</label>
                   <textarea
-                    className="flex w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 min-h-[100px] resize-y"
+                    className="flex w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm ring-offset-white dark:ring-offset-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 min-h-[100px] resize-y"
                     placeholder="Tell us a little bit about yourself..."
                     value={bio}
                     onChange={e => setBio(e.target.value)}
                   />
                 </div>
 
-                {error && <p className="text-sm text-red-600">{error}</p>}
+                {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-                <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                  {saved && <span className="text-sm text-emerald-600 flex items-center mr-auto">Changes saved successfully!</span>}
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  {saved && <span className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center mr-auto">Changes saved successfully!</span>}
                   <Button type="submit" className="min-w-[120px]" disabled={isSaving}>
                     <Save className="w-4 h-4 mr-2" />
                     {isSaving ? 'Saving...' : 'Save Changes'}

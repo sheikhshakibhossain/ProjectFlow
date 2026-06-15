@@ -26,18 +26,18 @@ const TaskCard: React.FC<{ task: Task, assignee?: User, isOwnTask: boolean }> = 
     <div
       ref={drag}
       title={isOwnTask ? undefined : 'Only the assignee can change this task\'s status'}
-      className={`p-4 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-indigo-300 transition-colors ${isOwnTask ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} ${isDragging ? 'opacity-50' : 'opacity-100'}`}
+      className={`p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500/40 transition-colors ${isOwnTask ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} ${isDragging ? 'opacity-50' : 'opacity-100'}`}
     >
       <div className="flex justify-between items-start mb-2">
         <Badge variant={task.priority === 'high' ? 'destructive' : task.priority === 'medium' ? 'warning' : 'secondary'}>
           {task.priority}
         </Badge>
       </div>
-      <h4 className="font-medium text-slate-900 text-sm mb-1">{task.title}</h4>
-      <p className="text-xs text-slate-500 line-clamp-2 mb-3">{task.description}</p>
+      <h4 className="font-medium text-slate-900 dark:text-slate-100 text-sm mb-1">{task.title}</h4>
+      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">{task.description}</p>
 
-      <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-100">
-        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+      <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
           <Clock className="w-3.5 h-3.5" />
           {new Date(task.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
         </div>
@@ -59,14 +59,14 @@ const Column: React.FC<{ status: TaskStatus, title: string, tasks: Task[], membe
   }));
 
   return (
-    <div className="flex flex-col flex-1 min-w-[300px] max-w-sm bg-slate-100/50 rounded-2xl p-4 border border-slate-200">
+    <div className="flex flex-col flex-1 min-w-[300px] max-w-sm bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-800">
       <div className="flex items-center justify-between mb-4 px-1">
-        <h3 className="font-semibold text-slate-700">{title}</h3>
-        <Badge variant="secondary" className="bg-white">{tasks.length}</Badge>
+        <h3 className="font-semibold text-slate-700 dark:text-slate-300">{title}</h3>
+        <Badge variant="secondary" className="bg-white dark:bg-slate-900">{tasks.length}</Badge>
       </div>
       <div
         ref={drop}
-        className={`flex-1 flex flex-col gap-3 min-h-[200px] rounded-xl transition-colors ${isOver ? 'bg-indigo-50/50 border border-indigo-200 border-dashed' : ''}`}
+        className={`flex-1 flex flex-col gap-3 min-h-[200px] rounded-xl transition-colors ${isOver ? 'bg-indigo-50/50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 border-dashed' : ''}`}
       >
         {tasks.map((task) => (
           <TaskCard key={task.id} task={task} assignee={members.find(m => m.id === task.assigneeId)} isOwnTask={!!currentUserId && task.assigneeId === currentUserId} />
@@ -117,16 +117,16 @@ export const ProjectDetails: React.FC = () => {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-full pt-12 text-slate-500">Loading project...</div>;
+    return <div className="flex items-center justify-center h-full pt-12 text-slate-500 dark:text-slate-400">Loading project...</div>;
   }
 
   if (notFound || !project) return (
     <div className="flex flex-col items-center justify-center h-full pt-12">
-      <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-        <AlertCircle className="w-8 h-8 text-slate-400" />
+      <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+        <AlertCircle className="w-8 h-8 text-slate-400 dark:text-slate-500" />
       </div>
-      <h2 className="text-xl font-semibold text-slate-900 mb-2">Project Not Found</h2>
-      <p className="text-slate-500 mb-6">The project you're looking for doesn't exist or you don't have access.</p>
+      <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">Project Not Found</h2>
+      <p className="text-slate-500 dark:text-slate-400 mb-6">The project you're looking for doesn't exist or you don't have access.</p>
       <Button asChild>
         <Link to="/projects">Return to Projects</Link>
       </Button>
@@ -148,7 +148,7 @@ export const ProjectDetails: React.FC = () => {
             </Button>
             <div>
               <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{project.title}</h1>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{project.title}</h1>
                 <Badge
                   variant={
                     project.status === 'active' ? 'success'
@@ -161,7 +161,7 @@ export const ProjectDetails: React.FC = () => {
                   {project.status.replace('_', ' ')}
                 </Badge>
               </div>
-              <p className="text-slate-500">{project.course}</p>
+              <p className="text-slate-500 dark:text-slate-400">{project.course}</p>
             </div>
           </div>
           <div className="flex gap-3 shrink-0">
@@ -182,30 +182,30 @@ export const ProjectDetails: React.FC = () => {
 
         {/* Status banner */}
         {project.status === 'dormant' && (
-          <div className="shrink-0 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="shrink-0 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-400">
             This project is awaiting approval from its supervisor before work can begin.
           </div>
         )}
         {project.status === 'rejected' && (
-          <div className="shrink-0 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div className="shrink-0 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-800 dark:text-red-400">
             This project's supervision request was declined by the supervisor.
           </div>
         )}
 
         {/* Project Meta */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
-          <Card className="md:col-span-3 bg-white">
+          <Card className="md:col-span-3 bg-white dark:bg-slate-900">
             <CardContent className="p-4 sm:p-6">
-              <p className="text-slate-600 text-sm">{project.description}</p>
+              <p className="text-slate-600 dark:text-slate-400 text-sm">{project.description}</p>
             </CardContent>
           </Card>
-          <Card className="bg-indigo-50 border-indigo-100">
+          <Card className="bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20">
             <CardContent className="p-4 sm:p-6 flex flex-col justify-center h-full">
-              <p className="text-sm font-medium text-indigo-800 mb-2">Overall Progress</p>
+              <p className="text-sm font-medium text-indigo-800 dark:text-indigo-300 mb-2">Overall Progress</p>
               <div className="flex items-end gap-2 mb-2">
-                <span className="text-3xl font-bold text-indigo-600 leading-none">{project.progress}%</span>
+                <span className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 leading-none">{project.progress}%</span>
               </div>
-              <div className="h-2 w-full bg-indigo-200/50 rounded-full overflow-hidden">
+              <div className="h-2 w-full bg-indigo-200/50 dark:bg-indigo-500/30 rounded-full overflow-hidden">
                 <div className="h-full bg-indigo-600 rounded-full" style={{ width: `${project.progress}%` }} />
               </div>
             </CardContent>
@@ -214,9 +214,9 @@ export const ProjectDetails: React.FC = () => {
 
         {/* Task error banner */}
         {taskError && (
-          <div className="shrink-0 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex items-center justify-between">
+          <div className="shrink-0 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-800 dark:text-red-400 flex items-center justify-between">
             {taskError}
-            <button onClick={() => setTaskError(null)} className="text-red-600 hover:text-red-800 font-medium">Dismiss</button>
+            <button onClick={() => setTaskError(null)} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-400 font-medium">Dismiss</button>
           </div>
         )}
 

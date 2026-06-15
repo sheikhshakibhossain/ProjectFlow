@@ -25,7 +25,7 @@ const ProjectCard: React.FC<{ project: Project; memberCount?: number; canDrag: b
   return (
     <div ref={drag} className={`${canDrag ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'opacity-50' : 'opacity-100'}`}>
       <Link to={`/projects/${project.id}`}>
-        <Card className="h-full hover:shadow-md transition-all hover:border-indigo-200 cursor-pointer group">
+        <Card className="h-full hover:shadow-md transition-all hover:border-indigo-200 dark:hover:border-indigo-500/30 cursor-pointer group">
           <CardHeader className="pb-3">
             <div className="flex justify-between items-start">
               <Badge
@@ -42,10 +42,10 @@ const ProjectCard: React.FC<{ project: Project; memberCount?: number; canDrag: b
               </Badge>
             </div>
             <CardTitle className="text-xl group-hover:text-indigo-600 transition-colors">{project.title}</CardTitle>
-            <p className="text-sm text-slate-500 line-clamp-2 mt-2">{project.description}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mt-2">{project.description}</p>
           </CardHeader>
           <CardContent className="mt-auto pt-4 space-y-4">
-            <div className="flex justify-between items-center text-sm text-slate-600">
+            <div className="flex justify-between items-center text-sm text-slate-600 dark:text-slate-400">
               <div className="flex items-center gap-1.5">
                 <Clock className="w-4 h-4" />
                 <span>{project.deadline}</span>
@@ -59,10 +59,10 @@ const ProjectCard: React.FC<{ project: Project; memberCount?: number; canDrag: b
             </div>
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs">
-                <span className="font-medium text-slate-700">Progress</span>
-                <span className="text-slate-500">{project.progress}%</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Progress</span>
+                <span className="text-slate-500 dark:text-slate-400">{project.progress}%</span>
               </div>
-              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-indigo-600 rounded-full transition-all duration-500"
                   style={{ width: `${project.progress}%` }}
@@ -98,17 +98,17 @@ const SectionFolder: React.FC<{
     <div
       ref={drop}
       onClick={onOpen}
-      className={`group relative flex items-center gap-3 p-4 bg-white rounded-2xl border-2 cursor-pointer transition-colors ${isOver && canDrop ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
+      className={`group relative flex items-center gap-3 p-4 bg-white dark:bg-slate-900 rounded-2xl border-2 cursor-pointer transition-colors ${isOver && canDrop ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10' : 'border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-500/40'}`}
     >
       <Folder className="w-8 h-8 text-indigo-500 shrink-0" />
       <div className="min-w-0">
-        <p className="font-medium text-slate-900 truncate">{section.name}</p>
-        <p className="text-xs text-slate-500">{count} project{count === 1 ? '' : 's'}</p>
+        <p className="font-medium text-slate-900 dark:text-slate-100 truncate">{section.name}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{count} project{count === 1 ? '' : 's'}</p>
       </div>
       {isTeacher && (
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="absolute top-2 right-2 p-1 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute top-2 right-2 p-1 rounded-full text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
           title="Delete section"
         >
           <X className="w-4 h-4" />
@@ -133,7 +133,7 @@ const BackToProjects: React.FC<{ onClick: () => void; onDropProject: (projectId:
     <button
       ref={drop}
       onClick={onClick}
-      className={`flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors px-3 py-1.5 rounded-lg ${isOver && canDrop ? 'bg-indigo-50 text-indigo-600 ring-2 ring-indigo-200' : ''}`}
+      className={`flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-3 py-1.5 rounded-lg ${isOver && canDrop ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 ring-2 ring-indigo-200 dark:ring-indigo-500/30' : ''}`}
     >
       <ArrowLeft className="w-4 h-4" />
       All Projects
@@ -227,8 +227,8 @@ export const Projects: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Projects</h1>
-          <p className="text-slate-500 mt-1">Manage and track your academic projects.</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Projects</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Manage and track your academic projects.</p>
         </div>
         {user?.role === 'team_lead' && (
           <Button asChild className="shrink-0">
@@ -240,13 +240,13 @@ export const Projects: React.FC = () => {
         )}
       </div>
 
-      {sectionError && <div className="p-4 bg-red-50 text-red-700 rounded-xl text-sm">{sectionError}</div>}
+      {sectionError && <div className="p-4 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 rounded-xl text-sm">{sectionError}</div>}
 
       {activeSectionId === null ? (
         (sections.length > 0 || isTeacher) && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Sections</h2>
+              <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Sections</h2>
               {isTeacher && !isCreatingSection && (
                 <Button variant="outline" size="sm" onClick={() => setIsCreatingSection(true)}>
                   <FolderPlus className="w-4 h-4 mr-2" />
@@ -260,7 +260,7 @@ export const Projects: React.FC = () => {
                 <Input
                   autoFocus
                   placeholder="Section name..."
-                  className="bg-white max-w-xs"
+                  className="bg-white dark:bg-slate-900 max-w-xs"
                   value={newSectionName}
                   onChange={(e) => setNewSectionName(e.target.value)}
                   onKeyDown={(e) => {
@@ -297,8 +297,8 @@ export const Projects: React.FC = () => {
             onDropProject={(projectId) => handleMoveProject(projectId, null)}
             isTeacher={isTeacher}
           />
-          <span className="text-slate-300">/</span>
-          <div className="flex items-center gap-2 font-semibold text-slate-900">
+          <span className="text-slate-300 dark:text-slate-600">/</span>
+          <div className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
             <Folder className="w-4 h-4 text-indigo-500" />
             {activeSection?.name || 'Section'}
           </div>
@@ -307,10 +307,10 @@ export const Projects: React.FC = () => {
 
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
           <Input
             placeholder="Search projects..."
-            className="pl-10 bg-white"
+            className="pl-10 bg-white dark:bg-slate-900"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -319,7 +319,7 @@ export const Projects: React.FC = () => {
           <select
             value={filter}
             onChange={e => setFilter(e.target.value)}
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="h-10 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="all">All Status</option>
             <option value="dormant">Dormant</option>
@@ -331,13 +331,13 @@ export const Projects: React.FC = () => {
         </div>
       </div>
 
-      {error && <div className="p-4 bg-red-50 text-red-700 rounded-xl text-sm">{error}</div>}
+      {error && <div className="p-4 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 rounded-xl text-sm">{error}</div>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {isLoading ? (
-          <div className="col-span-full py-12 text-center text-slate-500">Loading projects...</div>
+          <div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400">Loading projects...</div>
         ) : filteredProjects.length === 0 ? (
-          <div className="col-span-full py-12 text-center text-slate-500 bg-white rounded-2xl border border-slate-200 border-dashed">
+          <div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 border-dashed">
             {activeSectionId !== null
               ? 'No projects in this section yet.'
               : 'No projects found matching your criteria.'}

@@ -1,31 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '../components/ui';
-import { MOCK_PROJECTS, MOCK_TASKS, MOCK_USERS, Task, TaskStatus } from '../lib/mockData';
+import { Card, CardContent, Button, Badge } from '../components/ui';
+import { api } from '../lib/api';
+import type { Project, Task, TaskStatus, User } from '../lib/types';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Plus, Clock, AlertCircle, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Plus, Clock, AlertCircle } from 'lucide-react';
 
 const ItemTypes = {
   TASK: 'task'
 };
 
-const TaskCard: React.FC<{ task: Task, index: number, moveTask: (taskId: string, targetStatus: TaskStatus) => void }> = ({ task, moveTask }) => {
+const TaskCard: React.FC<{ task: Task, assignee?: User, isOwnTask: boolean }> = ({ task, assignee, isOwnTask }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemTypes.TASK,
     item: { id: task.id },
+    canDrag: isOwnTask,
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
-  }));
-
-  const assignee = MOCK_USERS.find(u => u.id === task.assigneeId);
+  }), [isOwnTask]);
 
   return (
     <div
       ref={drag}
-      className={`p-4 bg-white rounded-xl border border-slate-200 shadow-sm cursor-grab active:cursor-grabbing hover:border-indigo-300 transition-colors ${isDragging ? 'opacity-50' : 'opacity-100'}`}
+      title={isOwnTask ? undefined : 'Only the assignee can change this task\'s status'}
+      className={`p-4 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-indigo-300 transition-colors ${isOwnTask ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} ${isDragging ? 'opacity-50' : 'opacity-100'}`}
     >
       <div className="flex justify-between items-start mb-2">
         <Badge variant={task.priority === 'high' ? 'destructive' : task.priority === 'medium' ? 'warning' : 'secondary'}>
@@ -34,7 +35,7 @@ const TaskCard: React.FC<{ task: Task, index: number, moveTask: (taskId: string,
       </div>
       <h4 className="font-medium text-slate-900 text-sm mb-1">{task.title}</h4>
       <p className="text-xs text-slate-500 line-clamp-2 mb-3">{task.description}</p>
-      
+
       <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-100">
         <div className="flex items-center gap-1.5 text-xs text-slate-500">
           <Clock className="w-3.5 h-3.5" />
@@ -48,7 +49,7 @@ const TaskCard: React.FC<{ task: Task, index: number, moveTask: (taskId: string,
   );
 };
 
-const Column: React.FC<{ status: TaskStatus, title: string, tasks: Task[], moveTask: (taskId: string, targetStatus: TaskStatus) => void }> = ({ status, title, tasks, moveTask }) => {
+const Column: React.FC<{ status: TaskStatus, title: string, tasks: Task[], members: User[], currentUserId?: string, moveTask: (taskId: string, targetStatus: TaskStatus) => void }> = ({ status, title, tasks, members, currentUserId, moveTask }) => {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: ItemTypes.TASK,
     drop: (item: { id: string }) => moveTask(item.id, status),
@@ -63,12 +64,12 @@ const Column: React.FC<{ status: TaskStatus, title: string, tasks: Task[], moveT
         <h3 className="font-semibold text-slate-700">{title}</h3>
         <Badge variant="secondary" className="bg-white">{tasks.length}</Badge>
       </div>
-      <div 
-        ref={drop} 
+      <div
+        ref={drop}
         className={`flex-1 flex flex-col gap-3 min-h-[200px] rounded-xl transition-colors ${isOver ? 'bg-indigo-50/50 border border-indigo-200 border-dashed' : ''}`}
       >
-        {tasks.map((task, i) => (
-          <TaskCard key={task.id} task={task} index={i} moveTask={moveTask} />
+        {tasks.map((task) => (
+          <TaskCard key={task.id} task={task} assignee={members.find(m => m.id === task.assigneeId)} isOwnTask={!!currentUserId && task.assigneeId === currentUserId} />
         ))}
       </div>
     </div>
@@ -79,17 +80,47 @@ export const ProjectDetails: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
-  const project = MOCK_PROJECTS.find(p => p.id === id);
+
+  const [project, setProject] = useState<Project | null>(null);
+  const [members, setMembers] = useState<User[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [taskError, setTaskError] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    if (!id) return;
+    setIsLoading(true);
+    Promise.all([api.getProject(id), api.getTasks(id)])
+      .then(([projectRes, tasksRes]) => {
+        setProject(projectRes.project);
+        setMembers(projectRes.members);
+        setTasks(tasksRes.tasks);
+      })
+      .catch(() => setNotFound(true))
+      .finally(() => setIsLoading(false));
+  }, [id]);
 
   useEffect(() => {
-    if (project) {
-      setTasks(MOCK_TASKS.filter(t => t.projectId === project.id));
-    }
-  }, [project]);
+    load();
+  }, [load]);
 
-  if (!project) return (
+  const moveTask = (taskId: string, targetStatus: TaskStatus) => {
+    setTaskError(null);
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: targetStatus } : t));
+    api.updateTask(taskId, { status: targetStatus })
+      .then(() => id && api.getProject(id).then(({ project }) => setProject(project)))
+      .catch((err) => {
+        setTaskError(err instanceof Error ? err.message : 'Failed to update task status');
+        load();
+      });
+  };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-full pt-12 text-slate-500">Loading project...</div>;
+  }
+
+  if (notFound || !project) return (
     <div className="flex flex-col items-center justify-center h-full pt-12">
       <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
         <AlertCircle className="w-8 h-8 text-slate-400" />
@@ -101,10 +132,6 @@ export const ProjectDetails: React.FC = () => {
       </Button>
     </div>
   );
-
-  const moveTask = (taskId: string, targetStatus: TaskStatus) => {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: targetStatus } : t));
-  };
 
   const todoTasks = tasks.filter(t => t.status === 'todo');
   const inProgressTasks = tasks.filter(t => t.status === 'in_progress');
@@ -122,7 +149,17 @@ export const ProjectDetails: React.FC = () => {
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{project.title}</h1>
-                <Badge variant={project.status === 'active' ? 'success' : 'default'}>{project.status}</Badge>
+                <Badge
+                  variant={
+                    project.status === 'active' ? 'success'
+                    : project.status === 'completed' ? 'default'
+                    : project.status === 'dormant' ? 'warning'
+                    : project.status === 'rejected' ? 'destructive'
+                    : 'secondary'
+                  }
+                >
+                  {project.status.replace('_', ' ')}
+                </Badge>
               </div>
               <p className="text-slate-500">{project.course}</p>
             </div>
@@ -142,6 +179,18 @@ export const ProjectDetails: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Status banner */}
+        {project.status === 'dormant' && (
+          <div className="shrink-0 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            This project is awaiting approval from its supervisor before work can begin.
+          </div>
+        )}
+        {project.status === 'rejected' && (
+          <div className="shrink-0 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            This project's supervision request was declined by the supervisor.
+          </div>
+        )}
 
         {/* Project Meta */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
@@ -163,12 +212,20 @@ export const ProjectDetails: React.FC = () => {
           </Card>
         </div>
 
+        {/* Task error banner */}
+        {taskError && (
+          <div className="shrink-0 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex items-center justify-between">
+            {taskError}
+            <button onClick={() => setTaskError(null)} className="text-red-600 hover:text-red-800 font-medium">Dismiss</button>
+          </div>
+        )}
+
         {/* Kanban Board */}
         <div className="flex-1 overflow-x-auto pb-4">
           <div className="flex gap-6 min-w-max h-full items-start">
-            <Column status="todo" title="To Do" tasks={todoTasks} moveTask={moveTask} />
-            <Column status="in_progress" title="In Progress" tasks={inProgressTasks} moveTask={moveTask} />
-            <Column status="done" title="Done" tasks={doneTasks} moveTask={moveTask} />
+            <Column status="todo" title="To Do" tasks={todoTasks} members={members} currentUserId={user?.id} moveTask={moveTask} />
+            <Column status="in_progress" title="In Progress" tasks={inProgressTasks} members={members} currentUserId={user?.id} moveTask={moveTask} />
+            <Column status="done" title="Done" tasks={doneTasks} members={members} currentUserId={user?.id} moveTask={moveTask} />
           </div>
         </div>
       </div>

@@ -1,26 +1,43 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router';
 import { Card, CardContent, Button, Input, Badge } from '../components/ui';
-import { MOCK_PROJECTS, MOCK_USERS } from '../lib/mockData';
+import { api } from '../lib/api';
+import type { Project, User } from '../lib/types';
 import { ArrowLeft } from 'lucide-react';
 
 export const AddTask: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const project = useMemo(() => MOCK_PROJECTS.find(p => p.id === id), [id]);
+
+  const [project, setProject] = useState<Project | null>(null);
+  const [teamMembers, setTeamMembers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
   const [deadline, setDeadline] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const teamMembers = useMemo(() => {
-    if (!project?.teamId) return [];
-    return MOCK_USERS.filter(u => u.teamId === project.teamId);
-  }, [project]);
+  useEffect(() => {
+    if (!id) return;
+    api.getProject(id)
+      .then(({ project, members }) => {
+        setProject(project);
+        setTeamMembers(members);
+      })
+      .catch(() => setNotFound(true))
+      .finally(() => setIsLoading(false));
+  }, [id]);
 
-  if (!project) return (
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-full pt-12 text-slate-500">Loading...</div>;
+  }
+
+  if (notFound || !project) return (
     <div className="flex flex-col items-center justify-center h-full pt-12">
       <h2 className="text-xl font-semibold text-slate-900 mb-2">Project Not Found</h2>
       <p className="text-slate-500 mb-6">The project you're looking for doesn't exist.</p>
@@ -30,10 +47,24 @@ export const AddTask: React.FC = () => {
     </div>
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Dummy submit logic
-    navigate(`/projects/${project.id}`);
+    setError('');
+    setIsSubmitting(true);
+    try {
+      await api.createTask(project.id, {
+        title,
+        description,
+        assigneeId: assigneeId || undefined,
+        deadline,
+        priority,
+      });
+      navigate(`/projects/${project.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create task');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -112,9 +143,11 @@ export const AddTask: React.FC = () => {
               />
             </div>
 
+            {error && <p className="text-sm text-red-600">{error}</p>}
+
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
               <Button type="button" variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
-              <Button type="submit">Create Task</Button>
+              <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Creating...' : 'Create Task'}</Button>
             </div>
           </form>
         </CardContent>

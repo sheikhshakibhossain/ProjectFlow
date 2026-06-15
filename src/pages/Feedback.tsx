@@ -1,33 +1,55 @@
-import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Input, Badge } from '../components/ui';
-import { MOCK_FEEDBACK, MOCK_PROJECTS, MOCK_USERS } from '../lib/mockData';
+import React, { useEffect, useState } from 'react';
+import { Card, CardHeader, CardContent, Button, Input, Badge } from '../components/ui';
+import { api } from '../lib/api';
+import type { Feedback as FeedbackType, Project } from '../lib/types';
 import { useAuth } from '../context/AuthContext';
-import { Star, MessageSquarePlus, Download, CheckCircle2 } from 'lucide-react';
+import { Star, MessageSquarePlus, CheckCircle2 } from 'lucide-react';
 
 export const Feedback: React.FC = () => {
   const { user } = useAuth();
-  
+
   // For Teacher view
+  const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState('');
   const [rating, setRating] = useState(5);
   const [comments, setComments] = useState('');
   const [highlights, setHighlights] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // For Student view
-  const myProjects = MOCK_PROJECTS.filter(p => p.teamId === user?.teamId);
-  const myFeedback = MOCK_FEEDBACK.filter(f => myProjects.some(p => p.id === f.projectId));
+  // For Student/Lead view
+  const [myFeedback, setMyFeedback] = useState<FeedbackType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!user) return;
+    if (user.role === 'teacher') {
+      api.getProjects().then(({ projects }) => setProjects(projects)).catch(() => {}).finally(() => setIsLoading(false));
+    } else {
+      api.getFeedback().then(({ feedback }) => setMyFeedback(feedback)).catch(() => {}).finally(() => setIsLoading(false));
+    }
+  }, [user]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      setSelectedProject('');
-      setRating(5);
-      setComments('');
-      setHighlights('');
-      setSubmitted(false);
-    }, 3000);
+    setError('');
+    setIsSubmitting(true);
+    try {
+      await api.createFeedback({ projectId: selectedProject, rating, comments, highlights });
+      setSubmitted(true);
+      setTimeout(() => {
+        setSelectedProject('');
+        setRating(5);
+        setComments('');
+        setHighlights('');
+        setSubmitted(false);
+      }, 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to submit feedback');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (user?.role === 'teacher') {
@@ -56,14 +78,14 @@ export const Feedback: React.FC = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium leading-none text-slate-700">Select Project</label>
-                  <select 
+                  <select
                     required
                     value={selectedProject}
                     onChange={(e) => setSelectedProject(e.target.value)}
                     className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                   >
                     <option value="" disabled>Choose a project...</option>
-                    {MOCK_PROJECTS.map(p => (
+                    {projects.map(p => (
                       <option key={p.id} value={p.id}>{p.title} - {p.course}</option>
                     ))}
                   </select>
@@ -87,8 +109,8 @@ export const Feedback: React.FC = () => {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium leading-none text-slate-700">Key Highlights / Suggestions (comma separated)</label>
-                  <Input 
-                    placeholder="e.g. Great UI, Need better error handling" 
+                  <Input
+                    placeholder="e.g. Great UI, Need better error handling"
                     value={highlights}
                     onChange={e => setHighlights(e.target.value)}
                   />
@@ -96,7 +118,7 @@ export const Feedback: React.FC = () => {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium leading-none text-slate-700">Detailed Comments</label>
-                  <textarea 
+                  <textarea
                     required
                     className="flex w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 min-h-[120px] resize-y"
                     placeholder="Provide constructive feedback on the team's progress..."
@@ -119,8 +141,12 @@ export const Feedback: React.FC = () => {
                   </div>
                 </div>
 
+                {error && <p className="text-sm text-red-600">{error}</p>}
+
                 <div className="flex justify-end pt-4">
-                  <Button type="submit" size="lg" className="w-full sm:w-auto">Submit Feedback</Button>
+                  <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
+                    {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+                  </Button>
                 </div>
               </form>
             </CardContent>
@@ -130,7 +156,7 @@ export const Feedback: React.FC = () => {
     );
   }
 
-  // Student View
+  // Student / Team Lead View
   return (
     <div className="space-y-6">
       <div>
@@ -139,55 +165,52 @@ export const Feedback: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {myFeedback.length === 0 ? (
+        {isLoading ? (
+          <div className="col-span-full py-12 text-center text-slate-500">Loading feedback...</div>
+        ) : myFeedback.length === 0 ? (
           <div className="col-span-full py-12 text-center text-slate-500 bg-white rounded-2xl border border-slate-200 border-dashed">
             No feedback received yet.
           </div>
         ) : (
-          myFeedback.map(feedback => {
-            const project = MOCK_PROJECTS.find(p => p.id === feedback.projectId);
-            const teacher = MOCK_USERS.find(u => u.id === feedback.teacherId);
+          myFeedback.map(feedback => (
+            <Card key={feedback.id} className="h-full flex flex-col">
+              <CardHeader className="pb-4 border-b border-slate-100">
+                <div className="flex justify-between items-start mb-2">
+                  <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 border-indigo-100">
+                    {feedback.projectTitle}
+                  </Badge>
+                  <span className="text-xs text-slate-500">{new Date(feedback.date).toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center gap-3 mt-4">
+                  <img src={feedback.teacherAvatar} alt={feedback.teacherName} className="w-10 h-10 rounded-full" />
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">{feedback.teacherName}</p>
+                    <div className="flex text-amber-500 mt-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className={`w-3 h-3 ${i < feedback.rating ? 'fill-current' : 'text-slate-200'}`} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-4 flex-1 flex flex-col">
+                <p className="text-slate-700 text-sm mb-4 leading-relaxed whitespace-pre-line">
+                  "{feedback.comments}"
+                </p>
 
-            return (
-              <Card key={feedback.id} className="h-full flex flex-col">
-                <CardHeader className="pb-4 border-b border-slate-100">
-                  <div className="flex justify-between items-start mb-2">
-                    <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 border-indigo-100">
-                      {project?.title}
-                    </Badge>
-                    <span className="text-xs text-slate-500">{new Date(feedback.date).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex items-center gap-3 mt-4">
-                    <img src={teacher?.avatar} alt={teacher?.name} className="w-10 h-10 rounded-full" />
-                    <div>
-                      <p className="text-sm font-medium text-slate-900">{teacher?.name}</p>
-                      <div className="flex text-amber-500 mt-0.5">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className={`w-3 h-3 ${i < feedback.rating ? 'fill-current' : 'text-slate-200'}`} />
-                        ))}
-                      </div>
+                {feedback.highlights && feedback.highlights.length > 0 && (
+                  <div className="mt-auto">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Key Highlights</p>
+                    <div className="flex flex-wrap gap-2">
+                      {feedback.highlights.map((h, i) => (
+                        <Badge key={i} variant="outline" className="bg-slate-50">{h}</Badge>
+                      ))}
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent className="pt-4 flex-1 flex flex-col">
-                  <p className="text-slate-700 text-sm mb-4 leading-relaxed whitespace-pre-line">
-                    "{feedback.comments}"
-                  </p>
-                  
-                  {feedback.highlights && feedback.highlights.length > 0 && (
-                    <div className="mt-auto">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Key Highlights</p>
-                      <div className="flex flex-wrap gap-2">
-                        {feedback.highlights.map((h, i) => (
-                          <Badge key={i} variant="outline" className="bg-slate-50">{h}</Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })
+                )}
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
     </div>

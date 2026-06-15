@@ -1,15 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Badge, Button } from '../ui';
-import { MOCK_TASKS, MOCK_PROJECTS } from '../../lib/mockData';
+import { api } from '../../lib/api';
+import type { Project, Task } from '../../lib/types';
 import { useAuth } from '../../context/AuthContext';
 import { CheckCircle2, Clock, PlayCircle, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router';
 
 export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
-  
-  const myTasks = MOCK_TASKS.filter(t => t.assigneeId === user?.id);
-  const myProjects = MOCK_PROJECTS.filter(p => p.teamId === user?.teamId);
+  const [myProjects, setMyProjects] = useState<Project[]>([]);
+  const [myTasks, setMyTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    api.getProjects()
+      .then(async ({ projects }) => {
+        if (cancelled) return;
+        setMyProjects(projects);
+        const taskLists = await Promise.all(projects.map(p => api.getTasks(p.id).then(r => r.tasks)));
+        if (cancelled) return;
+        setMyTasks(taskLists.flat().filter(t => t.assigneeId === user.id));
+      })
+      .catch(() => {})
+      .finally(() => !cancelled && setIsLoading(false));
+    return () => { cancelled = true; };
+  }, [user]);
 
   const todoTasks = myTasks.filter(t => t.status === 'todo');
   const inProgressTasks = myTasks.filter(t => t.status === 'in_progress');
@@ -30,6 +47,10 @@ export const StudentDashboard: React.FC = () => {
       default: return <Badge variant="secondary">Low</Badge>;
     }
   };
+
+  if (isLoading) {
+    return <div className="text-center py-12 text-slate-500">Loading dashboard...</div>;
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -119,16 +140,18 @@ export const StudentDashboard: React.FC = () => {
             <CardTitle>Active Projects</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {myProjects.map(project => (
+            {myProjects.length === 0 ? (
+              <div className="text-center py-4 text-slate-500 text-sm">No projects yet.</div>
+            ) : myProjects.map(project => (
               <div key={project.id} className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="font-medium text-slate-900">{project.title}</span>
                   <span className="text-slate-500">{project.progress}%</span>
                 </div>
                 <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-indigo-600 rounded-full transition-all duration-500" 
-                    style={{ width: `${project.progress}%` }} 
+                  <div
+                    className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                    style={{ width: `${project.progress}%` }}
                   />
                 </div>
               </div>

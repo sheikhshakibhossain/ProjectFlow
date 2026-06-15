@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button } from '../ui';
-import { MOCK_TASKS, MOCK_PROJECTS, MOCK_USERS } from '../../lib/mockData';
+import { api } from '../../lib/api';
+import type { Project, Task, User } from '../../lib/types';
 import { useAuth } from '../../context/AuthContext';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Plus, Users, LayoutList } from 'lucide-react';
@@ -10,10 +11,30 @@ const COLORS = ['#6366f1', '#f59e0b', '#10b981'];
 
 export const TeamLeadDashboard: React.FC = () => {
   const { user } = useAuth();
-  
-  const myProjects = MOCK_PROJECTS.filter(p => p.teamId === user?.teamId);
-  const teamMembers = MOCK_USERS.filter(u => u.teamId === user?.teamId);
-  const teamTasks = MOCK_TASKS.filter(t => myProjects.some(p => p.id === t.projectId));
+  const [myProjects, setMyProjects] = useState<Project[]>([]);
+  const [teamMembers, setTeamMembers] = useState<User[]>([]);
+  const [teamTasks, setTeamTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    Promise.all([
+      api.getProjects(),
+      user.teamId ? api.getTeamMembers(user.teamId) : Promise.resolve({ users: [] }),
+    ])
+      .then(async ([{ projects }, { users }]) => {
+        if (cancelled) return;
+        setMyProjects(projects);
+        setTeamMembers(users);
+        const taskLists = await Promise.all(projects.map(p => api.getTasks(p.id).then(r => r.tasks)));
+        if (cancelled) return;
+        setTeamTasks(taskLists.flat());
+      })
+      .catch(() => {})
+      .finally(() => !cancelled && setIsLoading(false));
+    return () => { cancelled = true; };
+  }, [user]);
 
   const todoCount = teamTasks.filter(t => t.status === 'todo').length;
   const inProgressCount = teamTasks.filter(t => t.status === 'in_progress').length;
@@ -29,6 +50,10 @@ export const TeamLeadDashboard: React.FC = () => {
     name: member.name.split(' ')[0],
     tasks: teamTasks.filter(t => t.assigneeId === member.id).length
   }));
+
+  if (isLoading) {
+    return <div className="text-center py-12 text-slate-500">Loading dashboard...</div>;
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

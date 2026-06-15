@@ -1,1 +1,0 @@
-Team Lead creates Project by selecting a SuperVisor, Project Status Dormant-> SuperVisor gets a Request {Accept/Reject} -> Project Status Active

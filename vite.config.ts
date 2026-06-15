@@ -19,4 +19,18 @@ export default defineConfig({
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
+
+  server: {
+    // Listen on all network interfaces so the dev server is reachable from
+    // other devices on the LAN (and from tunnels like ngrok).
+    host: true,
+    // Allow any Host header (LAN IPs, ngrok subdomains, etc.) to reach the dev server.
+    allowedHosts: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4001',
+        changeOrigin: true,
+      },
+    },
+  },
 })

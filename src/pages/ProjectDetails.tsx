@@ -154,13 +154,14 @@ const TaskModal: React.FC<{
 };
 
 // ── Task Card ───────────────────────────────────────────────────────────────
-const TaskCard: React.FC<{ task: Task; assignee?: User; isOwnTask: boolean; onClick: () => void }> = ({ task, assignee, isOwnTask, onClick }) => {
+const TaskCard: React.FC<{ task: Task; assignee?: User; isOwnTask: boolean; canMoveAny: boolean; onClick: () => void }> = ({ task, assignee, isOwnTask, canMoveAny, onClick }) => {
+  const canDrag = canMoveAny || isOwnTask;
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemTypes.TASK,
     item: { id: task.id },
-    canDrag: isOwnTask,
+    canDrag,
     collect: monitor => ({ isDragging: !!monitor.isDragging() }),
-  }), [isOwnTask]);
+  }), [canDrag]);
 
   const overdue = task.status !== 'done' && isOverdue(task.deadline);
 
@@ -168,10 +169,10 @@ const TaskCard: React.FC<{ task: Task; assignee?: User; isOwnTask: boolean; onCl
     <div
       ref={drag}
       onClick={onClick}
-      title={isOwnTask ? 'Click to view details / drag to move' : 'Click to view details'}
+      title={canDrag ? 'Click to view details / drag to move' : 'Click to view details'}
       className={`p-4 bg-white dark:bg-slate-900 rounded-xl border transition-colors cursor-pointer shadow-sm
         ${overdue ? 'border-red-200 dark:border-red-500/40 hover:border-red-400' : 'border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-500/40'}
-        ${isOwnTask ? 'active:cursor-grabbing' : ''}
+        ${canDrag ? 'active:cursor-grabbing' : ''}
         ${isDragging ? 'opacity-50' : 'opacity-100'}`}
     >
       <div className="flex justify-between items-start mb-2 gap-2">
@@ -201,9 +202,10 @@ const TaskCard: React.FC<{ task: Task; assignee?: User; isOwnTask: boolean; onCl
 const Column: React.FC<{
   status: TaskStatus; title: string; tasks: Task[]; members: User[];
   currentUserId?: string;
+  canMoveAny: boolean;
   moveTask: (taskId: string, targetStatus: TaskStatus) => void;
   onTaskClick: (task: Task) => void;
-}> = ({ status, title, tasks, members, currentUserId, moveTask, onTaskClick }) => {
+}> = ({ status, title, tasks, members, currentUserId, canMoveAny, moveTask, onTaskClick }) => {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: ItemTypes.TASK,
     drop: (item: { id: string }) => moveTask(item.id, status),
@@ -223,6 +225,7 @@ const Column: React.FC<{
             task={task}
             assignee={members.find(m => m.id === task.assigneeId)}
             isOwnTask={!!currentUserId && task.assigneeId === currentUserId}
+            canMoveAny={canMoveAny}
             onClick={() => onTaskClick(task)}
           />
         ))}
@@ -649,9 +652,9 @@ export const ProjectDetails: React.FC = () => {
         {/* Kanban */}
         <div className="flex-1 overflow-x-auto pb-4">
           <div className="flex gap-6 min-w-max h-full items-start">
-            <Column status="todo" title="To Do" tasks={todoTasks} members={members} currentUserId={user?.id} moveTask={moveTask} onTaskClick={setSelectedTask} />
-            <Column status="in_progress" title="In Progress" tasks={inProgressTasks} members={members} currentUserId={user?.id} moveTask={moveTask} onTaskClick={setSelectedTask} />
-            <Column status="done" title="Done" tasks={doneTasks} members={members} currentUserId={user?.id} moveTask={moveTask} onTaskClick={setSelectedTask} />
+            <Column status="todo" title="To Do" tasks={todoTasks} members={members} currentUserId={user?.id} canMoveAny={isCreator || user?.role === 'teacher'} moveTask={moveTask} onTaskClick={setSelectedTask} />
+            <Column status="in_progress" title="In Progress" tasks={inProgressTasks} members={members} currentUserId={user?.id} canMoveAny={isCreator || user?.role === 'teacher'} moveTask={moveTask} onTaskClick={setSelectedTask} />
+            <Column status="done" title="Done" tasks={doneTasks} members={members} currentUserId={user?.id} canMoveAny={isCreator || user?.role === 'teacher'} moveTask={moveTask} onTaskClick={setSelectedTask} />
           </div>
         </div>
       </div>

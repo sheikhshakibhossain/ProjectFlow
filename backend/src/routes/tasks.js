@@ -92,8 +92,9 @@ router.patch('/tasks/:taskId', requireAuth, (req, res) => {
     return res.status(400).json({ error: 'Invalid status' });
   }
 
-  if (status && status !== task.status && req.user.id !== task.assignee_id) {
-    return res.status(403).json({ error: "Only the assignee can change this task's status" });
+  const isProjectCreator = project.created_by === req.user.id;
+  if (status && status !== task.status && req.user.id !== task.assignee_id && !isProjectCreator && req.user.role !== 'teacher') {
+    return res.status(403).json({ error: "Only the assignee, project creator, or supervisor can change this task's status" });
   }
 
   db.prepare(`

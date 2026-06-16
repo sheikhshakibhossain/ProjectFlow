@@ -476,7 +476,7 @@ export const ProjectDetails: React.FC = () => {
             </div>
           </div>
           <div className="flex gap-2 shrink-0 flex-wrap">
-            {user?.role === 'teacher' && <Button asChild variant="outline"><Link to="/feedback">Add Feedback</Link></Button>}
+            {user?.role === 'teacher' && <Button asChild variant="outline"><Link to={`/feedback?project=${project.id}`}>Add Feedback</Link></Button>}
             {(isCreator || user?.role === 'teacher') && (
               <Button asChild><Link to={`/projects/${project.id}/add-task`}><Plus className="w-4 h-4 mr-2" />Add Task</Link></Button>
             )}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { Card, CardHeader, CardContent, Button, Input, Badge } from '../components/ui';
 import { api } from '../lib/api';
 import type { Feedback as FeedbackType, Project } from '../lib/types';
@@ -7,10 +8,11 @@ import { Star, MessageSquarePlus, CheckCircle2 } from 'lucide-react';
 
 export const Feedback: React.FC = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
 
   // For Teacher view
   const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProject, setSelectedProject] = useState('');
+  const [selectedProject, setSelectedProject] = useState(searchParams.get('project') ?? '');
   const [rating, setRating] = useState(5);
   const [comments, setComments] = useState('');
   const [highlights, setHighlights] = useState('');

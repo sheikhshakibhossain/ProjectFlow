@@ -4,6 +4,7 @@ import { db } from '../db/index.js';
 import { serializeTask } from '../utils/serialize.js';
 import { requireAuth } from '../middleware/auth.js';
 import { notifyUser } from '../utils/notify.js';
+import { pushToProjectMembers } from '../sse.js';
 
 const router = express.Router();
 
@@ -69,6 +70,11 @@ router.post('/projects/:projectId/tasks', requireAuth, (req, res) => {
     });
   }
 
+  pushToProjectMembers(db, project.id, {
+    _event: 'project_update', action: 'task_created',
+    projectId: project.id, task: serializeTask(task),
+  });
+
   res.status(201).json({ task: serializeTask(task) });
 });
 
@@ -104,6 +110,13 @@ router.patch('/tasks/:taskId', requireAuth, (req, res) => {
   recalcProjectProgress(project.id);
 
   const updated = db.prepare('SELECT * FROM tasks WHERE id = ?').get(task.id);
+  const updatedProgress = db.prepare('SELECT progress FROM projects WHERE id = ?').get(project.id)?.progress ?? project.progress;
+
+  pushToProjectMembers(db, project.id, {
+    _event: 'project_update', action: 'task_updated',
+    projectId: project.id, task: serializeTask(updated), progress: updatedProgress,
+  });
+
   res.json({ task: serializeTask(updated) });
 });
 
@@ -151,10 +164,15 @@ router.post('/tasks/:taskId/comments', requireAuth, (req, res) => {
   }
 
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
-  res.status(201).json({ comment: {
-    id, taskId: task.id, content: content.trim(), createdAt,
-    user: { id: req.user.id, name: user.name, avatar: user.avatar, role: user.role },
-  }});
+  const comment = { id, taskId: task.id, content: content.trim(), createdAt,
+    user: { id: req.user.id, name: user.name, avatar: user.avatar, role: user.role } };
+
+  pushToProjectMembers(db, project.id, {
+    _event: 'project_update', action: 'comment_added',
+    projectId: project.id, taskId: task.id, comment,
+  });
+
+  res.status(201).json({ comment });
 });
 
 export default router;

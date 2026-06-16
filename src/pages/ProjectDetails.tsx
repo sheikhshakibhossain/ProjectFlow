@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge, Input } from '../components/ui';
-import { api } from '../lib/api';
+import { api, subscribeToProjectUpdates } from '../lib/api';
 import type { Project, Task, TaskStatus, User, TaskComment } from '../lib/types';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, Plus, Clock, AlertCircle, Trash2, UserPlus, X, Send, AlertTriangle } from 'lucide-react';
@@ -17,9 +17,10 @@ function isOverdue(deadline: string) {
 // ── Task Modal ──────────────────────────────────────────────────────────────
 const TaskModal: React.FC<{
   task: Task;
+  projectId: string;
   members: User[];
   onClose: () => void;
-}> = ({ task, members, onClose }) => {
+}> = ({ task, projectId, members, onClose }) => {
   const { user } = useAuth();
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [commentText, setCommentText] = useState('');
@@ -30,6 +31,15 @@ const TaskModal: React.FC<{
   useEffect(() => {
     api.getTaskComments(task.id).then(({ comments }) => setComments(comments)).catch(() => {});
   }, [task.id]);
+
+  // Real-time: add comments posted by other users
+  useEffect(() => {
+    return subscribeToProjectUpdates(projectId, (event) => {
+      if (event.action === 'comment_added' && event.taskId === task.id && event.comment) {
+        setComments(prev => prev.some(c => c.id === event.comment!.id) ? prev : [...prev, event.comment!]);
+      }
+    });
+  }, [projectId, task.id]);
 
   const handlePost = async () => {
     if (!commentText.trim()) return;
@@ -400,6 +410,24 @@ export const ProjectDetails: React.FC = () => {
 
   useEffect(() => { load(); }, [load]);
 
+  // Real-time updates: sync task creates, moves, and progress from other users
+  const selectedTaskRef = useRef<Task | null>(null);
+  useEffect(() => { selectedTaskRef.current = selectedTask; }, [selectedTask]);
+
+  useEffect(() => {
+    if (!id) return;
+    return subscribeToProjectUpdates(id, (event) => {
+      if (event.action === 'task_created' && event.task) {
+        setTasks(prev => prev.some(t => t.id === event.task!.id) ? prev : [...prev, event.task!]);
+      } else if (event.action === 'task_updated' && event.task) {
+        setTasks(prev => prev.map(t => t.id === event.task!.id ? event.task! : t));
+        if (event.progress !== undefined) setProject(prev => prev ? { ...prev, progress: event.progress! } : prev);
+        // Keep the open task modal in sync
+        if (selectedTaskRef.current?.id === event.task.id) setSelectedTask(event.task);
+      }
+    });
+  }, [id]);
+
   const moveTask = (taskId: string, targetStatus: TaskStatus) => {
     setTaskError(null);
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: targetStatus } : t));
@@ -457,7 +485,7 @@ export const ProjectDetails: React.FC = () => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      {selectedTask && <TaskModal task={selectedTask} members={members} onClose={() => setSelectedTask(null)} />}
+      {selectedTask && <TaskModal task={selectedTask} projectId={id!} members={members} onClose={() => setSelectedTask(null)} />}
 
       <div className="space-y-6 flex flex-col h-full">
         {/* Header */}

@@ -21,3 +21,11 @@ export function pushToUser(userId, payload) {
     res.write(data);
   }
 }
+
+export function pushToProjectMembers(db, projectId, payload) {
+  const members = db.prepare('SELECT user_id FROM project_members WHERE project_id = ?').all(projectId);
+  const project = db.prepare('SELECT supervisor_id FROM projects WHERE id = ?').get(projectId);
+  const userIds = new Set(members.map(m => m.user_id));
+  if (project?.supervisor_id) userIds.add(project.supervisor_id);
+  for (const userId of userIds) pushToUser(userId, payload);
+}

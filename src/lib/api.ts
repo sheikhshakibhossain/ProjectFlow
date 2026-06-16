@@ -1,4 +1,4 @@
-import type { Feedback, Notification, Project, Role, Section, Task, User } from './types';
+import type { Feedback, Notification, Project, Role, Section, Task, TaskComment, User } from './types';
 
 const TOKEN_KEY = 'auth_token';
 
@@ -136,21 +136,61 @@ export const api = {
     request<{ notifications: Notification[] }>('/notifications/read-all', { method: 'PATCH' }),
 };
 
+// ── Shared SSE singleton ───────────────────────────────────────────────────
+// A single EventSource is shared across all subscribers so we don't open
+// multiple long-lived connections to the same stream endpoint.
+
+export type ProjectUpdateEvent = {
+  _event: 'project_update';
+  action: 'task_created' | 'task_updated' | 'comment_added';
+  projectId: string;
+  taskId?: string;
+  task?: Task;
+  comment?: TaskComment;
+  progress?: number;
+};
+
+type SsePayload = { _event?: string; [key: string]: unknown };
+
+let sseSource: EventSource | null = null;
+let sseConnectedToken: string | null = null;
+const sseListeners = new Set<(payload: SsePayload) => void>();
+
+function ensureSseConnected(): void {
+  const token = getToken();
+  if (!token) return;
+  if (sseSource && sseConnectedToken === token) return;
+  sseSource?.close();
+  sseConnectedToken = token;
+  sseSource = new EventSource(`/api/notifications/stream?token=${encodeURIComponent(token)}`);
+  sseSource.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data) as SsePayload;
+      for (const fn of sseListeners) fn(data);
+    } catch { /* ignore malformed */ }
+  };
+}
+
 // EventSource can't send an Authorization header, so the token is passed as a query param.
 export function subscribeToNotifications(onNotification: (notification: Notification) => void): () => void {
-  const token = getToken();
-  if (!token) return () => {};
-
-  const source = new EventSource(`/api/notifications/stream?token=${encodeURIComponent(token)}`);
-  source.onmessage = (event) => {
-    try {
-      onNotification(JSON.parse(event.data) as Notification);
-    } catch {
-      // ignore malformed payloads
-    }
+  ensureSseConnected();
+  const handler = (payload: SsePayload) => {
+    if (!payload._event) onNotification(payload as Notification);
   };
+  sseListeners.add(handler);
+  return () => { sseListeners.delete(handler); };
+}
 
-  return () => source.close();
+export function subscribeToProjectUpdates(
+  projectId: string,
+  onEvent: (event: ProjectUpdateEvent) => void,
+): () => void {
+  ensureSseConnected();
+  const handler = (payload: SsePayload) => {
+    if (payload._event === 'project_update' && payload.projectId === projectId) onEvent(payload);
+  };
+  sseListeners.add(handler);
+  return () => { sseListeners.delete(handler); };
 }
 
 export type { Feedback, Notification, Project, Role, Section, Task, TaskComment, TaskStatus, TaskPriority, User, SearchResult } from './types';

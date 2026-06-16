@@ -8,12 +8,14 @@ import { requireAuth, JWT_SECRET } from '../middleware/auth.js';
 
 const router = express.Router();
 
-const AVATARS = [
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&h=150&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&q=80',
-];
+const AVATAR_COLORS = ['#6366f1','#8b5cf6','#ec4899','#f43f5e','#f97316','#eab308','#22c55e','#14b8a6','#3b82f6','#06b6d4'];
+
+function generateAvatar(name) {
+  const initials = name.trim().split(/\s+/).map(w => w[0] || '').join('').toUpperCase().slice(0, 2) || '?';
+  const color = AVATAR_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"><rect width="150" height="150" fill="${color}"/><text x="75" y="98" font-family="Arial,sans-serif" font-size="58" font-weight="bold" fill="white" text-anchor="middle">${initials}</text></svg>`;
+  return 'data:image/svg+xml;base64,' + Buffer.from(svg).toString('base64');
+}
 
 function signToken(user) {
   return jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '7d' });
@@ -36,7 +38,7 @@ router.post('/signup', (req, res) => {
 
   const id = 'u' + crypto.randomUUID();
   const passwordHash = bcrypt.hashSync(password, 10);
-  const avatar = AVATARS[Math.floor(Math.random() * AVATARS.length)];
+  const avatar = generateAvatar(name);
 
   let teamId = null;
   if (role === 'team_lead') {

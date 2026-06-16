@@ -256,13 +256,13 @@ export const Layout: React.FC = () => {
             </div>
 
             {/* Profile Dropdown (simplified) */}
-            <div className="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800">
+            <NavLink to="/profile" className="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-slate-800 hover:opacity-80 transition-opacity">
               <div className="flex flex-col items-end hidden md:flex">
                 <span className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-none">{user.name}</span>
                 <span className="text-xs text-slate-500 dark:text-slate-400 capitalize mt-1">{user.role.replace('_', ' ')}</span>
               </div>
               <img src={user.avatar} alt="Profile" className="w-9 h-9 rounded-full border border-slate-200 dark:border-slate-700 object-cover" />
-            </div>
+            </NavLink>
           </div>
         </header>
 

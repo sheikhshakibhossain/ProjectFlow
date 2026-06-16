@@ -224,15 +224,15 @@ const Column: React.FC<{
 // ── Manage Members ──────────────────────────────────────────────────────────
 const ManageMembers: React.FC<{ project: Project; members: User[]; onMembersChange: (members: User[]) => void }> = ({ project, members, onMembersChange }) => {
   const { user } = useAuth();
-  const [teamMembers, setTeamMembers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (user?.teamId) api.getTeamMembers(user.teamId).then(({ users }) => setTeamMembers(users)).catch(() => {});
-  }, [user]);
+    api.getAllUsers().then(({ users }) => setAllUsers(users)).catch(() => {});
+  }, []);
 
-  const addable = teamMembers.filter(tm => !members.some(m => m.id === tm.id));
+  const addable = allUsers.filter(u => u.role !== 'teacher' && !members.some(m => m.id === u.id));
 
   const handleAdd = async (userId: string) => {
     setError(''); setActioningId(userId);

@@ -46,6 +46,9 @@ export const api = {
   uploadAvatar: (avatarDataUrl: string) =>
     request<{ user: User }>('/users/me/avatar', { method: 'POST', body: JSON.stringify({ avatar: avatarDataUrl }) }),
 
+  getAllUsers: () =>
+    request<{ users: User[] }>('/users'),
+
   getTeamMembers: (teamId: string) =>
     request<{ users: User[] }>(`/users?teamId=${encodeURIComponent(teamId)}`),
 

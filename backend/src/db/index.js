@@ -78,6 +78,12 @@ CREATE TABLE IF NOT EXISTS sections (
   created_by TEXT REFERENCES users(id),
   created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS project_members (
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  PRIMARY KEY (project_id, user_id)
+);
 `);
 
 // --- Migrations for databases created before the supervisor-approval workflow ---
@@ -111,6 +117,17 @@ if (!notificationCols.includes('related_project_id')) {
 const projectCols2 = db.prepare("PRAGMA table_info(projects)").all().map(c => c.name);
 if (!projectCols2.includes('section_id')) {
   db.exec(`ALTER TABLE projects ADD COLUMN section_id TEXT REFERENCES sections(id)`);
+}
+
+// Backfill project_members for projects that pre-date explicit member tracking
+const memberCount = db.prepare('SELECT COUNT(*) AS c FROM project_members').get().c;
+if (memberCount === 0) {
+  db.exec(`
+    INSERT OR IGNORE INTO project_members (project_id, user_id)
+    SELECT p.id, u.id FROM projects p
+    JOIN users u ON u.team_id = p.team_id
+    WHERE p.team_id IS NOT NULL
+  `);
 }
 
 function seed() {

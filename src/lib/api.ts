@@ -57,7 +57,7 @@ export const api = {
   getProject: (id: string) =>
     request<{ project: Project; members: User[] }>(`/projects/${id}`),
 
-  createProject: (payload: { title: string; description: string; course: string; deadline: string; supervisorId: string }) =>
+  createProject: (payload: { title: string; description: string; course: string; deadline: string; supervisorId: string; memberIds?: string[] }) =>
     request<{ project: Project }>('/projects', { method: 'POST', body: JSON.stringify(payload) }),
 
   respondToProject: (id: string, action: 'accept' | 'reject') =>

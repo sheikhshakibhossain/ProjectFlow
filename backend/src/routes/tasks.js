@@ -16,7 +16,9 @@ function recalcProjectProgress(projectId) {
 }
 
 function canAccessProject(user, project) {
-  return user.role === 'teacher' || project.team_id === user.team_id;
+  if (user.role === 'teacher') return true;
+  const member = db.prepare('SELECT 1 FROM project_members WHERE project_id = ? AND user_id = ?').get(project.id, user.id);
+  return !!member;
 }
 
 router.get('/projects/:projectId/tasks', requireAuth, (req, res) => {

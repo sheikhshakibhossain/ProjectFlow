@@ -35,7 +35,7 @@ export const CreateProject: React.FC = () => {
     setError('');
     setIsSubmitting(true);
     try {
-      await api.createProject({ title, description, course, deadline, supervisorId });
+      await api.createProject({ title, description, course, deadline, supervisorId, memberIds: selectedMembers });
       navigate('/projects');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create project');
@@ -147,7 +147,7 @@ export const CreateProject: React.FC = () => {
                   ))}
                 </div>
               )}
-              <p className="text-xs text-slate-400 dark:text-slate-500">All members of your team automatically have access to projects you create.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Only selected members will be added to this project. You are always included as the creator.</p>
             </div>
 
             {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

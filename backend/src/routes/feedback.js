@@ -44,6 +44,10 @@ router.post('/', requireAuth, (req, res) => {
   const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(projectId);
   if (!project) return res.status(404).json({ error: 'Project not found' });
 
+  if (project.supervisor_id !== req.user.id) {
+    return res.status(403).json({ error: 'You can only give feedback on your own supervised projects' });
+  }
+
   const highlightList = Array.isArray(highlights)
     ? highlights
     : (highlights || '').split(',').map(h => h.trim()).filter(Boolean);

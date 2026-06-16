@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Badge } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
-import { Save, Bell, Shield, User as UserIcon, Camera } from 'lucide-react';
+import { Save, User as UserIcon, Camera } from 'lucide-react';
 
 const MAX_AVATAR_DIMENSION = 512;
 
@@ -130,14 +130,6 @@ export const ProfileSettings: React.FC = () => {
               <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl transition-colors">
                 <UserIcon className="w-5 h-5" />
                 Personal Info
-              </button>
-              <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl transition-colors">
-                <Bell className="w-5 h-5" />
-                Notifications
-              </button>
-              <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl transition-colors">
-                <Shield className="w-5 h-5" />
-                Security
               </button>
             </nav>
           </Card>

@@ -213,7 +213,7 @@ const Column: React.FC<{
   }));
 
   return (
-    <div className="flex flex-col flex-1 min-w-[300px] max-w-sm bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-800">
+    <div className="flex flex-col min-w-[300px] max-w-sm bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 min-h-[480px]">
       <div className="flex items-center justify-between mb-4 px-1">
         <h3 className="font-semibold text-slate-700 dark:text-slate-300">{title}</h3>
         <Badge variant="secondary" className="bg-white dark:bg-slate-900">{tasks.length}</Badge>
@@ -269,7 +269,7 @@ const ManageMembers: React.FC<{ project: Project; members: User[]; onMembersChan
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         <div>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Current Members</p>
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
             {members.map(m => (
               <div key={m.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60">
                 <div className="flex items-center gap-2">
@@ -293,7 +293,7 @@ const ManageMembers: React.FC<{ project: Project; members: User[]; onMembersChan
         {addable.length > 0 && (
           <div>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Add from Team</p>
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
               {addable.map(m => (
                 <div key={m.id} className="flex items-center justify-between p-2 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
                   <div className="flex items-center gap-2">
@@ -490,7 +490,7 @@ export const ProjectDetails: React.FC = () => {
     <DndProvider backend={HTML5Backend}>
       {selectedTask && <TaskModal task={selectedTask} projectId={id!} members={members} onClose={() => setSelectedTask(null)} />}
 
-      <div className="space-y-6 flex flex-col h-full">
+      <div className="space-y-4">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
           <div className="flex items-start gap-4">
@@ -650,8 +650,8 @@ export const ProjectDetails: React.FC = () => {
         )}
 
         {/* Kanban */}
-        <div className="flex-1 overflow-x-auto pb-4">
-          <div className="flex gap-6 min-w-max h-full items-start">
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-6 min-w-max items-start">
             <Column status="todo" title="To Do" tasks={todoTasks} members={members} currentUserId={user?.id} canMoveAny={isCreator || user?.role === 'teacher'} moveTask={moveTask} onTaskClick={setSelectedTask} />
             <Column status="in_progress" title="In Progress" tasks={inProgressTasks} members={members} currentUserId={user?.id} canMoveAny={isCreator || user?.role === 'teacher'} moveTask={moveTask} onTaskClick={setSelectedTask} />
             <Column status="done" title="Done" tasks={doneTasks} members={members} currentUserId={user?.id} canMoveAny={isCreator || user?.role === 'teacher'} moveTask={moveTask} onTaskClick={setSelectedTask} />

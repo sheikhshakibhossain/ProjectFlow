@@ -146,6 +146,44 @@ if (!projectCols3.includes('pre_deletion_status')) {
   db.pragma('foreign_keys = ON');
 }
 
+// Migration: add under_review status
+const projectSQL = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='projects'").get()?.sql || '';
+if (!projectSQL.includes('under_review')) {
+  db.pragma('foreign_keys = OFF');
+  db.exec(`
+    DROP TABLE IF EXISTS projects_new;
+    CREATE TABLE projects_new (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      status TEXT NOT NULL DEFAULT 'dormant' CHECK(status IN ('dormant','active','completed','on_hold','rejected','deletion_requested','under_review')),
+      team_id TEXT REFERENCES teams(id),
+      course TEXT,
+      deadline TEXT,
+      progress INTEGER DEFAULT 0,
+      created_by TEXT REFERENCES users(id),
+      supervisor_id TEXT REFERENCES users(id),
+      section_id TEXT REFERENCES sections(id),
+      pre_deletion_status TEXT
+    );
+    INSERT INTO projects_new SELECT id, title, description, status, team_id, course, deadline, progress, created_by, supervisor_id, section_id, pre_deletion_status FROM projects;
+    DROP TABLE projects;
+    ALTER TABLE projects_new RENAME TO projects;
+  `);
+  db.pragma('foreign_keys = ON');
+}
+
+// Add task_comments table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS task_comments (
+    id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    content TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+`);
+
 // Backfill project_members for projects that pre-date explicit member tracking
 const memberCount = db.prepare('SELECT COUNT(*) AS c FROM project_members').get().c;
 if (memberCount === 0) {

@@ -78,6 +78,24 @@ export const api = {
   deleteProject: (id: string) =>
     request<{ deleted: boolean }>(`/projects/${id}`, { method: 'DELETE' }),
 
+  submitProject: (id: string) =>
+    request<{ project: Project }>(`/projects/${id}/submit`, { method: 'POST' }),
+
+  completeProject: (id: string, action: 'complete' | 'send_back') =>
+    request<{ project: Project }>(`/projects/${id}/complete`, { method: 'PATCH', body: JSON.stringify({ action }) }),
+
+  resubmitProject: (id: string, payload: { title?: string; description?: string; course?: string; deadline?: string; supervisorId?: string }) =>
+    request<{ project: Project }>(`/projects/${id}/resubmit`, { method: 'PATCH', body: JSON.stringify(payload) }),
+
+  getTaskComments: (taskId: string) =>
+    request<{ comments: TaskComment[] }>(`/tasks/${taskId}/comments`),
+
+  addTaskComment: (taskId: string, content: string) =>
+    request<{ comment: TaskComment }>(`/tasks/${taskId}/comments`, { method: 'POST', body: JSON.stringify({ content }) }),
+
+  search: (q: string) =>
+    request<SearchResult>(`/search?q=${encodeURIComponent(q)}`),
+
   moveProjectToSection: (id: string, sectionId: string | null) =>
     request<{ project: Project }>(`/projects/${id}/section`, { method: 'PATCH', body: JSON.stringify({ sectionId }) }),
 
@@ -132,4 +150,4 @@ export function subscribeToNotifications(onNotification: (notification: Notifica
   return () => source.close();
 }
 
-export type { Feedback, Notification, Project, Role, Section, Task, TaskStatus, TaskPriority, User } from './types';
+export type { Feedback, Notification, Project, Role, Section, Task, TaskComment, TaskStatus, TaskPriority, User, SearchResult } from './types';

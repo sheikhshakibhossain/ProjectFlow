@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '../ui';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import type { Feedback, Project, User } from '../../lib/types';
-import { MessageSquarePlus, GraduationCap, Clock, Inbox, Check, X, Trash2 } from 'lucide-react';
+import { MessageSquarePlus, GraduationCap, Clock, Inbox, Check, X, Trash2, CheckCircle, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router';
 
 export const TeacherDashboard: React.FC = () => {
@@ -16,6 +16,8 @@ export const TeacherDashboard: React.FC = () => {
   const [requestError, setRequestError] = useState('');
   const [deletionActioningId, setDeletionActioningId] = useState<string | null>(null);
   const [deletionError, setDeletionError] = useState('');
+  const [reviewActioningId, setReviewActioningId] = useState<string | null>(null);
+  const [reviewError, setReviewError] = useState('');
 
   useEffect(() => {
     Promise.all([api.getProjects(), api.getFeedback(), api.getUsersByRole('team_lead')])
@@ -34,6 +36,20 @@ export const TeacherDashboard: React.FC = () => {
 
   const projectRequests = supervisedProjects.filter(p => p.status === 'dormant' && p.supervisorId === user?.id);
   const deletionRequests = supervisedProjects.filter(p => p.status === 'deletion_requested');
+  const reviewRequests = supervisedProjects.filter(p => p.status === 'under_review');
+
+  const handleReview = async (id: string, action: 'complete' | 'send_back') => {
+    setReviewError('');
+    setReviewActioningId(id);
+    try {
+      const { project } = await api.completeProject(id, action);
+      setSupervisedProjects(prev => prev.map(p => p.id === id ? project : p));
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : 'Failed to respond');
+    } finally {
+      setReviewActioningId(null);
+    }
+  };
 
   const handleRespondDeletion = async (id: string, action: 'accept' | 'reject') => {
     setDeletionError('');
@@ -102,6 +118,40 @@ export const TeacherDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {reviewRequests.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-amber-500 dark:text-amber-400" />
+              Under Review
+              <Badge variant="warning">{reviewRequests.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {reviewError && <div className="p-3 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 rounded-xl text-sm">{reviewError}</div>}
+            {reviewRequests.map((project) => (
+              <div key={project.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-amber-100 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5">
+                <div className="min-w-0">
+                  <Link to={`/projects/${project.id}`} className="font-medium text-slate-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400">{project.title}</Link>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    {project.course}
+                    {requesters[project.createdBy || ''] && ` · Submitted by ${requesters[project.createdBy || ''].name}`}
+                  </p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleReview(project.id, 'complete')} disabled={reviewActioningId === project.id}>
+                    <CheckCircle className="w-4 h-4 mr-1.5" />Mark Complete
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleReview(project.id, 'send_back')} disabled={reviewActioningId === project.id}>
+                    <RotateCcw className="w-4 h-4 mr-1.5" />Send Back
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {deletionRequests.length > 0 && (
         <Card>

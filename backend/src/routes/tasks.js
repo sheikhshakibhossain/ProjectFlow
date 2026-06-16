@@ -106,4 +106,54 @@ router.patch('/tasks/:taskId', requireAuth, (req, res) => {
   res.json({ task: serializeTask(updated) });
 });
 
+router.get('/tasks/:taskId/comments', requireAuth, (req, res) => {
+  const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.taskId);
+  if (!task) return res.status(404).json({ error: 'Task not found' });
+  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(task.project_id);
+  if (!canAccessProject(req.user, project)) {
+    return res.status(403).json({ error: 'You do not have access to this task' });
+  }
+  const comments = db.prepare(`
+    SELECT c.*, u.name AS user_name, u.avatar AS user_avatar, u.role AS user_role
+    FROM task_comments c JOIN users u ON u.id = c.user_id
+    WHERE c.task_id = ? ORDER BY c.created_at ASC
+  `).all(req.params.taskId);
+  res.json({ comments: comments.map(c => ({
+    id: c.id, taskId: c.task_id, content: c.content, createdAt: c.created_at,
+    user: { id: c.user_id, name: c.user_name, avatar: c.user_avatar, role: c.user_role },
+  })) });
+});
+
+router.post('/tasks/:taskId/comments', requireAuth, (req, res) => {
+  const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.taskId);
+  if (!task) return res.status(404).json({ error: 'Task not found' });
+  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(task.project_id);
+  if (!canAccessProject(req.user, project)) {
+    return res.status(403).json({ error: 'You do not have access to this task' });
+  }
+  const { content } = req.body || {};
+  if (!content?.trim()) return res.status(400).json({ error: 'content is required' });
+
+  const id = 'tc' + crypto.randomUUID();
+  const createdAt = new Date().toISOString();
+  db.prepare('INSERT INTO task_comments (id, task_id, user_id, content, created_at) VALUES (?, ?, ?, ?, ?)')
+    .run(id, task.id, req.user.id, content.trim(), createdAt);
+
+  if (task.assignee_id && task.assignee_id !== req.user.id) {
+    notifyUser({
+      userId: task.assignee_id,
+      title: 'New Comment on Task',
+      message: `${req.user.name} commented on "${task.title}"`,
+      type: 'task',
+      relatedProjectId: project.id,
+    });
+  }
+
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  res.status(201).json({ comment: {
+    id, taskId: task.id, content: content.trim(), createdAt,
+    user: { id: req.user.id, name: user.name, avatar: user.avatar, role: user.role },
+  }});
+});
+
 export default router;

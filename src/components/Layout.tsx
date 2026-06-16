@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   Sun,
-  Moon
+  Moon,
+  Search
 } from 'lucide-react';
 import { cn } from './ui';
 import { api, subscribeToNotifications } from '../lib/api';
@@ -25,6 +26,13 @@ export const Layout: React.FC = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (q) { navigate(`/search?q=${encodeURIComponent(q)}`); setSearchQuery(''); }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -169,6 +177,18 @@ export const Layout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Search bar */}
+            <form onSubmit={handleSearch} className="hidden sm:flex items-center relative">
+              <Search className="absolute left-3 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search projects & tasks…"
+                className="pl-9 pr-3 py-1.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48 focus:w-64 transition-all"
+              />
+            </form>
+
             {/* Dark mode toggle */}
             <button
               className="p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 rounded-full"

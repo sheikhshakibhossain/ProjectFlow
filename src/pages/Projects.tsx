@@ -6,7 +6,11 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
 import type { Project, Section } from '../lib/types';
 import { Link } from 'react-router';
-import { Search, Plus, Clock, Users, Folder, FolderPlus, X, ArrowLeft } from 'lucide-react';
+import { Search, Plus, Clock, Users, Folder, FolderPlus, X, ArrowLeft, AlertTriangle } from 'lucide-react';
+
+function isOverdue(deadline: string) {
+  return new Date(deadline) < new Date(new Date().toDateString());
+}
 
 const ItemTypes = {
   PROJECT: 'project',
@@ -22,31 +26,33 @@ const ProjectCard: React.FC<{ project: Project; memberCount?: number; canDrag: b
     }),
   }), [canDrag, project.id]);
 
+  const overdue = !['completed', 'rejected', 'deletion_requested'].includes(project.status) && isOverdue(project.deadline);
+
+  const statusVariant = (s: string) =>
+    s === 'active' ? 'success' : s === 'completed' ? 'default' : s === 'dormant' ? 'warning'
+    : s === 'rejected' ? 'destructive' : s === 'deletion_requested' ? 'destructive' : s === 'under_review' ? 'warning' : 'secondary';
+  const statusLabel = (s: string) =>
+    s === 'deletion_requested' ? 'deletion pending' : s === 'under_review' ? 'under review' : s.replace('_', ' ');
+
   return (
     <div ref={drag} className={`${canDrag ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'opacity-50' : 'opacity-100'}`}>
       <Link to={`/projects/${project.id}`}>
-        <Card className="h-full hover:shadow-md transition-all hover:border-indigo-200 dark:hover:border-indigo-500/30 cursor-pointer group">
+        <Card className={`h-full hover:shadow-md transition-all cursor-pointer group ${overdue ? 'hover:border-red-200 dark:hover:border-red-500/30 border-red-100 dark:border-red-500/20' : 'hover:border-indigo-200 dark:hover:border-indigo-500/30'}`}>
           <CardHeader className="pb-3">
-            <div className="flex justify-between items-start">
-              <Badge
-                variant={
-                  project.status === 'active' ? 'success'
-                  : project.status === 'completed' ? 'default'
-                  : project.status === 'dormant' ? 'warning'
-                  : project.status === 'rejected' ? 'destructive'
-                  : 'secondary'
-                }
-                className="mb-2"
-              >
-                {project.status.replace('_', ' ')}
-              </Badge>
+            <div className="flex justify-between items-start flex-wrap gap-1">
+              <Badge variant={statusVariant(project.status)} className="mb-1">{statusLabel(project.status)}</Badge>
+              {overdue && (
+                <Badge variant="destructive" className="mb-1 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />overdue
+                </Badge>
+              )}
             </div>
             <CardTitle className="text-xl group-hover:text-indigo-600 transition-colors">{project.title}</CardTitle>
             <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mt-2">{project.description}</p>
           </CardHeader>
           <CardContent className="mt-auto pt-4 space-y-4">
             <div className="flex justify-between items-center text-sm text-slate-600 dark:text-slate-400">
-              <div className="flex items-center gap-1.5">
+              <div className={`flex items-center gap-1.5 ${overdue ? 'text-red-500 dark:text-red-400' : ''}`}>
                 <Clock className="w-4 h-4" />
                 <span>{project.deadline}</span>
               </div>
@@ -326,6 +332,7 @@ export const Projects: React.FC = () => {
             <option value="active">Active</option>
             <option value="completed">Completed</option>
             <option value="on_hold">On Hold</option>
+            <option value="under_review">Under Review</option>
             <option value="rejected">Rejected</option>
           </select>
         </div>

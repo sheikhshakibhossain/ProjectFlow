@@ -10,6 +10,7 @@ import tasksRoutes from './routes/tasks.js';
 import feedbackRoutes from './routes/feedback.js';
 import notificationsRoutes from './routes/notifications.js';
 import sectionsRoutes from './routes/sections.js';
+import searchRoutes from './routes/search.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -30,6 +31,7 @@ app.use('/api', tasksRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/sections', sectionsRoutes);
+app.use('/api/search', searchRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

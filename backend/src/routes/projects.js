@@ -128,6 +128,112 @@ router.patch('/:id/section', requireAuth, (req, res) => {
   res.json({ project: serializeProject(updated) });
 });
 
+router.post('/:id/submit', requireAuth, (req, res) => {
+  if (req.user.role !== 'team_lead') {
+    return res.status(403).json({ error: 'Only team leads can submit projects for review' });
+  }
+  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(req.params.id);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+  if (project.created_by !== req.user.id) {
+    return res.status(403).json({ error: 'Only the project creator can submit for review' });
+  }
+  if (project.status !== 'active') {
+    return res.status(400).json({ error: 'Only active projects can be submitted for review' });
+  }
+
+  db.prepare('UPDATE projects SET status = ? WHERE id = ?').run('under_review', project.id);
+
+  if (project.supervisor_id) {
+    notifyUser({
+      userId: project.supervisor_id,
+      title: 'Project Submitted for Review',
+      message: `${req.user.name} submitted "${project.title}" for completion review`,
+      type: 'project_request',
+      relatedProjectId: project.id,
+    });
+  }
+
+  const updated = db.prepare('SELECT * FROM projects WHERE id = ?').get(project.id);
+  res.json({ project: serializeProject(updated) });
+});
+
+router.patch('/:id/complete', requireAuth, (req, res) => {
+  if (req.user.role !== 'teacher') {
+    return res.status(403).json({ error: 'Only teachers can mark projects as complete' });
+  }
+  const { action } = req.body || {};
+  if (action !== 'complete' && action !== 'send_back') {
+    return res.status(400).json({ error: "action must be 'complete' or 'send_back'" });
+  }
+  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(req.params.id);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+  if (project.supervisor_id !== req.user.id) {
+    return res.status(403).json({ error: 'You are not the supervisor for this project' });
+  }
+  if (project.status !== 'under_review') {
+    return res.status(400).json({ error: 'Project is not under review' });
+  }
+
+  const newStatus = action === 'complete' ? 'completed' : 'active';
+  db.prepare('UPDATE projects SET status = ? WHERE id = ?').run(newStatus, project.id);
+
+  const members = db.prepare('SELECT user_id FROM project_members WHERE project_id = ?').all(project.id);
+  const title = action === 'complete' ? 'Project Completed' : 'Project Sent Back';
+  const message = action === 'complete'
+    ? `${req.user.name} marked "${project.title}" as completed`
+    : `${req.user.name} sent "${project.title}" back for more work`;
+  for (const m of members) {
+    notifyUser({ userId: m.user_id, title, message, type: 'project_response', relatedProjectId: project.id });
+  }
+
+  const updated = db.prepare('SELECT * FROM projects WHERE id = ?').get(project.id);
+  res.json({ project: serializeProject(updated) });
+});
+
+router.patch('/:id/resubmit', requireAuth, (req, res) => {
+  if (req.user.role !== 'team_lead') {
+    return res.status(403).json({ error: 'Only team leads can resubmit projects' });
+  }
+  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(req.params.id);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+  if (project.created_by !== req.user.id) {
+    return res.status(403).json({ error: 'Only the project creator can resubmit' });
+  }
+  if (project.status !== 'rejected') {
+    return res.status(400).json({ error: 'Only rejected projects can be resubmitted' });
+  }
+
+  const { title, description, course, deadline, supervisorId } = req.body || {};
+  const newSupervisorId = supervisorId || project.supervisor_id;
+
+  if (supervisorId) {
+    const supervisor = db.prepare("SELECT * FROM users WHERE id = ? AND role = 'teacher'").get(supervisorId);
+    if (!supervisor) return res.status(400).json({ error: 'Selected supervisor is not a valid teacher' });
+  }
+
+  db.prepare(`
+    UPDATE projects SET
+      title = COALESCE(?, title),
+      description = COALESCE(?, description),
+      course = COALESCE(?, course),
+      deadline = COALESCE(?, deadline),
+      supervisor_id = ?,
+      status = 'dormant'
+    WHERE id = ?
+  `).run(title || null, description || null, course || null, deadline || null, newSupervisorId, project.id);
+
+  notifyUser({
+    userId: newSupervisorId,
+    title: 'Project Resubmitted',
+    message: `${req.user.name} resubmitted "${title || project.title}" for your supervision`,
+    type: 'project_request',
+    relatedProjectId: project.id,
+  });
+
+  const updated = db.prepare('SELECT * FROM projects WHERE id = ?').get(project.id);
+  res.json({ project: serializeProject(updated) });
+});
+
 router.post('/:id/request-delete', requireAuth, (req, res) => {
   if (req.user.role !== 'team_lead') {
     return res.status(403).json({ error: 'Only team leads can request project deletion' });

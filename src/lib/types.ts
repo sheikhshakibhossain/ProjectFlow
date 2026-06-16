@@ -28,7 +28,7 @@ export interface Project {
   id: string;
   title: string;
   description: string;
-  status: 'dormant' | 'active' | 'completed' | 'on_hold' | 'rejected' | 'deletion_requested';
+  status: 'dormant' | 'active' | 'completed' | 'on_hold' | 'rejected' | 'deletion_requested' | 'under_review';
   teamId: string;
   course: string;
   deadline: string;
@@ -56,6 +56,28 @@ export interface Feedback {
   projectTitle?: string;
   teacherName?: string;
   teacherAvatar?: string;
+}
+
+export interface TaskComment {
+  id: string;
+  taskId: string;
+  content: string;
+  createdAt: string;
+  user: { id: string; name: string; avatar: string; role: string };
+}
+
+export interface SearchResult {
+  projects: Project[];
+  tasks: Array<{
+    id: string;
+    projectId: string;
+    projectTitle: string;
+    title: string;
+    description: string;
+    status: string;
+    priority: string;
+    deadline: string;
+  }>;
 }
 
 export interface Notification {

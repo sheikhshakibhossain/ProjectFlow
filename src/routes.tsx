@@ -8,6 +8,7 @@ import { AddTask } from './pages/AddTask';
 import { ProjectDetails } from './pages/ProjectDetails';
 import { Feedback } from './pages/Feedback';
 import { ProfileSettings } from './pages/Settings';
+import { SearchResults } from './pages/Search';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 
@@ -43,6 +44,7 @@ export const router = createBrowserRouter([
       { path: 'projects/:id', Component: ProjectDetails },
       { path: 'feedback', Component: Feedback },
       { path: 'profile', Component: ProfileSettings },
+      { path: 'search', Component: SearchResults },
     ],
   },
 ]);

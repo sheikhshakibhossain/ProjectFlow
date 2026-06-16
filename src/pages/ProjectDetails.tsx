@@ -263,7 +263,9 @@ const ManageMembers: React.FC<{ project: Project; members: User[]; onMembersChan
                   <img src={m.avatar} alt={m.name} className="w-7 h-7 rounded-full" />
                   <div>
                     <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{m.name}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{m.role.replace('_', ' ')}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">
+                      {m.id === project.createdBy ? 'team lead' : m.role === 'teacher' ? 'teacher' : 'member'}
+                    </p>
                   </div>
                 </div>
                 {m.id !== project.createdBy && (
@@ -475,7 +477,7 @@ export const ProjectDetails: React.FC = () => {
           </div>
           <div className="flex gap-2 shrink-0 flex-wrap">
             {user?.role === 'teacher' && <Button asChild variant="outline"><Link to="/feedback">Add Feedback</Link></Button>}
-            {user?.role !== 'student' && (
+            {(isCreator || user?.role === 'teacher') && (
               <Button asChild><Link to={`/projects/${project.id}/add-task`}><Plus className="w-4 h-4 mr-2" />Add Task</Link></Button>
             )}
             {isCreator && project.status === 'active' && (

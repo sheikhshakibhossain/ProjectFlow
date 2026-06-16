@@ -33,14 +33,15 @@ router.get('/projects/:projectId/tasks', requireAuth, (req, res) => {
 });
 
 router.post('/projects/:projectId/tasks', requireAuth, (req, res) => {
-  if (req.user.role === 'student') {
-    return res.status(403).json({ error: 'Students cannot create tasks' });
-  }
-
   const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(req.params.projectId);
   if (!project) return res.status(404).json({ error: 'Project not found' });
   if (!canAccessProject(req.user, project)) {
     return res.status(403).json({ error: 'You do not have access to this project' });
+  }
+
+  const isProjectCreator = project.created_by === req.user.id;
+  if (req.user.role !== 'teacher' && !isProjectCreator) {
+    return res.status(403).json({ error: 'Only the project creator or supervisor can add tasks' });
   }
 
   const { title, description, assigneeId, deadline, priority } = req.body || {};

@@ -265,50 +265,52 @@ const ManageMembers: React.FC<{ project: Project; members: User[]; onMembersChan
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><UserPlus className="w-5 h-5" />Manage Members</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-        <div>
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Current Members</p>
-          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-            {members.map(m => (
-              <div key={m.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60">
-                <div className="flex items-center gap-2">
-                  <img src={m.avatar} alt={m.name} className="w-7 h-7 rounded-full" />
-                  <div>
-                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{m.name}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">
-                      {m.id === project.createdBy ? 'team lead' : m.role === 'teacher' ? 'teacher' : 'member'}
-                    </p>
-                  </div>
-                </div>
-                {m.id !== project.createdBy && (
-                  <button onClick={() => handleRemove(m.id)} disabled={actioningId === m.id} className="p-1 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors disabled:opacity-40" title="Remove member">
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-        {addable.length > 0 && (
+      <CardContent>
+        {error && <p className="text-sm text-red-600 dark:text-red-400 mb-3">{error}</p>}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Add from Team</p>
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-              {addable.map(m => (
-                <div key={m.id} className="flex items-center justify-between p-2 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
-                  <div className="flex items-center gap-2">
-                    <img src={m.avatar} alt={m.name} className="w-7 h-7 rounded-full opacity-60" />
-                    <div>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{m.name}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{m.role.replace('_', ' ')}</p>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Current Members</p>
+            <div className="space-y-1 max-h-52 overflow-y-auto pr-1">
+              {members.map(m => (
+                <div key={m.id} className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <img src={m.avatar} alt={m.name} className="w-6 h-6 rounded-full shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{m.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">
+                        {m.id === project.createdBy ? 'team lead' : m.role === 'teacher' ? 'teacher' : 'member'}
+                      </p>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline" onClick={() => handleAdd(m.id)} disabled={actioningId === m.id}>Add</Button>
+                  {m.id !== project.createdBy && (
+                    <button onClick={() => handleRemove(m.id)} disabled={actioningId === m.id} className="p-1 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors disabled:opacity-40 shrink-0" title="Remove member">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
           </div>
-        )}
+          {addable.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Add from Team</p>
+              <div className="space-y-1 max-h-52 overflow-y-auto pr-1">
+                {addable.map(m => (
+                  <div key={m.id} className="flex items-center justify-between px-2 py-1.5 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <img src={m.avatar} alt={m.name} className="w-6 h-6 rounded-full opacity-60 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">{m.name}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{m.role.replace('_', ' ')}</p>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline" className="shrink-0 h-7 text-xs px-2" onClick={() => handleAdd(m.id)} disabled={actioningId === m.id}>Add</Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
@@ -634,13 +636,6 @@ export const ProjectDetails: React.FC = () => {
           </Card>
         </div>
 
-        {/* Manage members (team lead only) */}
-        {isCreator && (
-          <div className="shrink-0">
-            <ManageMembers project={project} members={members} onMembersChange={setMembers} />
-          </div>
-        )}
-
         {/* Task error */}
         {taskError && (
           <div className="shrink-0 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-800 dark:text-red-400 flex items-center justify-between">
@@ -657,6 +652,11 @@ export const ProjectDetails: React.FC = () => {
             <Column status="done" title="Done" tasks={doneTasks} members={members} currentUserId={user?.id} canMoveAny={isCreator || user?.role === 'teacher'} moveTask={moveTask} onTaskClick={setSelectedTask} />
           </div>
         </div>
+
+        {/* Manage members (team lead only) — below kanban so it doesn't push board off screen */}
+        {isCreator && (
+          <ManageMembers project={project} members={members} onMembersChange={setMembers} />
+        )}
       </div>
     </DndProvider>
   );

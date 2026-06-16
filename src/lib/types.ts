@@ -28,7 +28,7 @@ export interface Project {
   id: string;
   title: string;
   description: string;
-  status: 'dormant' | 'active' | 'completed' | 'on_hold' | 'rejected';
+  status: 'dormant' | 'active' | 'completed' | 'on_hold' | 'rejected' | 'deletion_requested';
   teamId: string;
   course: string;
   deadline: string;

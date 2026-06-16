@@ -128,6 +128,206 @@ router.patch('/:id/section', requireAuth, (req, res) => {
   res.json({ project: serializeProject(updated) });
 });
 
+router.post('/:id/request-delete', requireAuth, (req, res) => {
+  if (req.user.role !== 'team_lead') {
+    return res.status(403).json({ error: 'Only team leads can request project deletion' });
+  }
+
+  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(req.params.id);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+
+  if (project.created_by !== req.user.id) {
+    return res.status(403).json({ error: 'Only the project creator can request deletion' });
+  }
+
+  if (project.status === 'deletion_requested') {
+    return res.status(400).json({ error: 'Deletion already requested' });
+  }
+
+  db.prepare('UPDATE projects SET pre_deletion_status = status, status = ? WHERE id = ?').run('deletion_requested', project.id);
+
+  if (project.supervisor_id) {
+    notifyUser({
+      userId: project.supervisor_id,
+      title: 'Project Deletion Request',
+      message: `${req.user.name} requested to delete "${project.title}"`,
+      type: 'project_request',
+      relatedProjectId: project.id,
+    });
+  }
+
+  const members = db.prepare('SELECT user_id FROM project_members WHERE project_id = ?').all(project.id);
+  for (const m of members) {
+    if (m.user_id !== req.user.id) {
+      notifyUser({
+        userId: m.user_id,
+        title: 'Project Deletion Requested',
+        message: `${req.user.name} has requested to delete "${project.title}"`,
+        type: 'system',
+        relatedProjectId: project.id,
+      });
+    }
+  }
+
+  const updated = db.prepare('SELECT * FROM projects WHERE id = ?').get(project.id);
+  res.json({ project: serializeProject(updated) });
+});
+
+router.patch('/:id/respond-delete', requireAuth, (req, res) => {
+  if (req.user.role !== 'teacher') {
+    return res.status(403).json({ error: 'Only teachers can respond to deletion requests' });
+  }
+
+  const { action } = req.body || {};
+  if (action !== 'accept' && action !== 'reject') {
+    return res.status(400).json({ error: "action must be 'accept' or 'reject'" });
+  }
+
+  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(req.params.id);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+
+  if (project.supervisor_id !== req.user.id) {
+    return res.status(403).json({ error: 'You are not the supervisor for this project' });
+  }
+
+  if (project.status !== 'deletion_requested') {
+    return res.status(400).json({ error: 'No deletion request pending for this project' });
+  }
+
+  if (action === 'accept') {
+    const members = db.prepare('SELECT user_id FROM project_members WHERE project_id = ?').all(project.id);
+    db.prepare('DELETE FROM tasks WHERE project_id = ?').run(project.id);
+    db.prepare('DELETE FROM feedback WHERE project_id = ?').run(project.id);
+    db.prepare('UPDATE notifications SET related_project_id = NULL WHERE related_project_id = ?').run(project.id);
+    db.prepare('DELETE FROM projects WHERE id = ?').run(project.id);
+
+    for (const m of members) {
+      notifyUser({
+        userId: m.user_id,
+        title: 'Project Deleted',
+        message: `"${project.title}" has been deleted`,
+        type: 'system',
+        relatedProjectId: null,
+      });
+    }
+
+    return res.json({ deleted: true });
+  } else {
+    const prevStatus = project.pre_deletion_status || 'active';
+    db.prepare('UPDATE projects SET status = ?, pre_deletion_status = NULL WHERE id = ?').run(prevStatus, project.id);
+
+    if (project.created_by) {
+      notifyUser({
+        userId: project.created_by,
+        title: 'Deletion Request Rejected',
+        message: `${req.user.name} rejected the deletion request for "${project.title}"`,
+        type: 'project_response',
+        relatedProjectId: project.id,
+      });
+    }
+
+    const updated = db.prepare('SELECT * FROM projects WHERE id = ?').get(project.id);
+    return res.json({ project: serializeProject(updated) });
+  }
+});
+
+router.post('/:id/members', requireAuth, (req, res) => {
+  if (req.user.role !== 'team_lead') {
+    return res.status(403).json({ error: 'Only team leads can add members' });
+  }
+
+  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(req.params.id);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+
+  if (project.created_by !== req.user.id) {
+    return res.status(403).json({ error: 'Only the project creator can manage members' });
+  }
+
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'userId is required' });
+
+  const targetUser = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+  if (!targetUser) return res.status(404).json({ error: 'User not found' });
+
+  db.prepare('INSERT OR IGNORE INTO project_members (project_id, user_id) VALUES (?, ?)').run(project.id, userId);
+
+  notifyUser({
+    userId,
+    title: 'Added to Project',
+    message: `${req.user.name} added you to "${project.title}"`,
+    type: 'system',
+    relatedProjectId: project.id,
+  });
+
+  const members = db.prepare('SELECT u.* FROM users u JOIN project_members pm ON pm.user_id = u.id WHERE pm.project_id = ?').all(project.id);
+  res.json({ members: members.map(serializeUser) });
+});
+
+router.delete('/:id/members/:userId', requireAuth, (req, res) => {
+  if (req.user.role !== 'team_lead') {
+    return res.status(403).json({ error: 'Only team leads can remove members' });
+  }
+
+  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(req.params.id);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+
+  if (project.created_by !== req.user.id) {
+    return res.status(403).json({ error: 'Only the project creator can manage members' });
+  }
+
+  const targetUserId = req.params.userId;
+  if (targetUserId === req.user.id) {
+    return res.status(400).json({ error: 'Cannot remove yourself from the project' });
+  }
+
+  db.prepare('DELETE FROM project_members WHERE project_id = ? AND user_id = ?').run(project.id, targetUserId);
+
+  const targetUser = db.prepare('SELECT * FROM users WHERE id = ?').get(targetUserId);
+  if (targetUser) {
+    notifyUser({
+      userId: targetUserId,
+      title: 'Removed from Project',
+      message: `${req.user.name} removed you from "${project.title}"`,
+      type: 'system',
+      relatedProjectId: null,
+    });
+  }
+
+  const members = db.prepare('SELECT u.* FROM users u JOIN project_members pm ON pm.user_id = u.id WHERE pm.project_id = ?').all(project.id);
+  res.json({ members: members.map(serializeUser) });
+});
+
+router.delete('/:id', requireAuth, (req, res) => {
+  if (req.user.role !== 'teacher') {
+    return res.status(403).json({ error: 'Only teachers can directly delete projects' });
+  }
+
+  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(req.params.id);
+  if (!project) return res.status(404).json({ error: 'Project not found' });
+
+  if (project.supervisor_id !== req.user.id) {
+    return res.status(403).json({ error: 'You are not the supervisor for this project' });
+  }
+
+  const members = db.prepare('SELECT user_id FROM project_members WHERE project_id = ?').all(project.id);
+  db.prepare('DELETE FROM tasks WHERE project_id = ?').run(project.id);
+  db.prepare('DELETE FROM feedback WHERE project_id = ?').run(project.id);
+  db.prepare('UPDATE notifications SET related_project_id = NULL WHERE related_project_id = ?').run(project.id);
+  db.prepare('DELETE FROM projects WHERE id = ?').run(project.id);
+
+  for (const m of members) {
+    notifyUser({
+      userId: m.user_id,
+      title: 'Project Deleted',
+      message: `"${project.title}" has been deleted by supervisor ${req.user.name}`,
+      type: 'system',
+      relatedProjectId: null,
+    });
+  }
+
+  res.json({ deleted: true });
+});
+
 router.get('/:id', requireAuth, (req, res) => {
   const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(req.params.id);
   if (!project) {

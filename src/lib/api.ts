@@ -63,6 +63,21 @@ export const api = {
   respondToProject: (id: string, action: 'accept' | 'reject') =>
     request<{ project: Project }>(`/projects/${id}/respond`, { method: 'PATCH', body: JSON.stringify({ action }) }),
 
+  requestProjectDeletion: (id: string) =>
+    request<{ project: Project }>(`/projects/${id}/request-delete`, { method: 'POST' }),
+
+  respondProjectDeletion: (id: string, action: 'accept' | 'reject') =>
+    request<{ project?: Project; deleted?: boolean }>(`/projects/${id}/respond-delete`, { method: 'PATCH', body: JSON.stringify({ action }) }),
+
+  addProjectMember: (id: string, userId: string) =>
+    request<{ members: User[] }>(`/projects/${id}/members`, { method: 'POST', body: JSON.stringify({ userId }) }),
+
+  removeProjectMember: (id: string, userId: string) =>
+    request<{ members: User[] }>(`/projects/${id}/members/${userId}`, { method: 'DELETE' }),
+
+  deleteProject: (id: string) =>
+    request<{ deleted: boolean }>(`/projects/${id}`, { method: 'DELETE' }),
+
   moveProjectToSection: (id: string, sectionId: string | null) =>
     request<{ project: Project }>(`/projects/${id}/section`, { method: 'PATCH', body: JSON.stringify({ sectionId }) }),
 

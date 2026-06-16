@@ -119,6 +119,33 @@ if (!projectCols2.includes('section_id')) {
   db.exec(`ALTER TABLE projects ADD COLUMN section_id TEXT REFERENCES sections(id)`);
 }
 
+// Migration: add deletion_requested status + pre_deletion_status column
+const projectCols3 = db.prepare("PRAGMA table_info(projects)").all().map(c => c.name);
+if (!projectCols3.includes('pre_deletion_status')) {
+  db.pragma('foreign_keys = OFF');
+  db.exec(`
+    DROP TABLE IF EXISTS projects_new;
+    CREATE TABLE projects_new (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      status TEXT NOT NULL DEFAULT 'dormant' CHECK(status IN ('dormant','active','completed','on_hold','rejected','deletion_requested')),
+      team_id TEXT REFERENCES teams(id),
+      course TEXT,
+      deadline TEXT,
+      progress INTEGER DEFAULT 0,
+      created_by TEXT REFERENCES users(id),
+      supervisor_id TEXT REFERENCES users(id),
+      section_id TEXT REFERENCES sections(id),
+      pre_deletion_status TEXT
+    );
+    INSERT INTO projects_new SELECT id, title, description, status, team_id, course, deadline, progress, created_by, supervisor_id, section_id, NULL FROM projects;
+    DROP TABLE projects;
+    ALTER TABLE projects_new RENAME TO projects;
+  `);
+  db.pragma('foreign_keys = ON');
+}
+
 // Backfill project_members for projects that pre-date explicit member tracking
 const memberCount = db.prepare('SELECT COUNT(*) AS c FROM project_members').get().c;
 if (memberCount === 0) {

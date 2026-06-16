@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '../ui';
 import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import type { Feedback, Project, User } from '../../lib/types';
-import { MessageSquarePlus, GraduationCap, Clock, Inbox, Check, X } from 'lucide-react';
+import { MessageSquarePlus, GraduationCap, Clock, Inbox, Check, X, Trash2 } from 'lucide-react';
 import { Link } from 'react-router';
 
 export const TeacherDashboard: React.FC = () => {
@@ -14,6 +14,8 @@ export const TeacherDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [requestError, setRequestError] = useState('');
+  const [deletionActioningId, setDeletionActioningId] = useState<string | null>(null);
+  const [deletionError, setDeletionError] = useState('');
 
   useEffect(() => {
     Promise.all([api.getProjects(), api.getFeedback(), api.getUsersByRole('team_lead')])
@@ -31,6 +33,24 @@ export const TeacherDashboard: React.FC = () => {
   }
 
   const projectRequests = supervisedProjects.filter(p => p.status === 'dormant' && p.supervisorId === user?.id);
+  const deletionRequests = supervisedProjects.filter(p => p.status === 'deletion_requested');
+
+  const handleRespondDeletion = async (id: string, action: 'accept' | 'reject') => {
+    setDeletionError('');
+    setDeletionActioningId(id);
+    try {
+      const result = await api.respondProjectDeletion(id, action);
+      if (result.deleted) {
+        setSupervisedProjects(prev => prev.filter(p => p.id !== id));
+      } else if (result.project) {
+        setSupervisedProjects(prev => prev.map(p => p.id === id ? result.project! : p));
+      }
+    } catch (err) {
+      setDeletionError(err instanceof Error ? err.message : 'Failed to respond');
+    } finally {
+      setDeletionActioningId(null);
+    }
+  };
 
   const handleRespond = async (id: string, action: 'accept' | 'reject') => {
     setRequestError('');
@@ -82,6 +102,54 @@ export const TeacherDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {deletionRequests.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-red-500 dark:text-red-400" />
+              Deletion Requests
+              <Badge variant="destructive">{deletionRequests.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {deletionError && <div className="p-3 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 rounded-xl text-sm">{deletionError}</div>}
+            {deletionRequests.map((project) => (
+              <div key={project.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-red-100 dark:border-red-500/20 bg-red-50/50 dark:bg-red-500/5">
+                <div className="min-w-0">
+                  <Link to={`/projects/${project.id}`} className="font-medium text-slate-900 dark:text-slate-100 hover:text-red-600 dark:hover:text-red-400">
+                    {project.title}
+                  </Link>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                    {project.course}
+                    {requesters[project.createdBy || ''] && ` · Requested by ${requesters[project.createdBy || ''].name}`}
+                  </p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                    onClick={() => handleRespondDeletion(project.id, 'accept')}
+                    disabled={deletionActioningId === project.id}
+                  >
+                    <Trash2 className="w-4 h-4 mr-1.5" />
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleRespondDeletion(project.id, 'reject')}
+                    disabled={deletionActioningId === project.id}
+                  >
+                    <X className="w-4 h-4 mr-1.5" />
+                    Reject
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

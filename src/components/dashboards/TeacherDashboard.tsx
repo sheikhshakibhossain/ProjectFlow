@@ -4,10 +4,11 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import type { Feedback, Project, User } from '../../lib/types';
 import { MessageSquarePlus, GraduationCap, Clock, Inbox, Check, X, Trash2, CheckCircle, RotateCcw } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 export const TeacherDashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [supervisedProjects, setSupervisedProjects] = useState<Project[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [requesters, setRequesters] = useState<Record<string, User>>({});
@@ -84,7 +85,7 @@ export const TeacherDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/projects')}>
           <CardContent className="p-6 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
               <GraduationCap className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
@@ -95,7 +96,7 @@ export const TeacherDashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/projects')}>
           <CardContent className="p-6 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center">
               <Inbox className="w-6 h-6 text-amber-600 dark:text-amber-400" />
@@ -106,7 +107,7 @@ export const TeacherDashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/feedback')}>
           <CardContent className="p-6 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
               <MessageSquarePlus className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />

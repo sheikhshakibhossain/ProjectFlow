@@ -4,10 +4,11 @@ import { api } from '../../lib/api';
 import type { Project, Task } from '../../lib/types';
 import { useAuth } from '../../context/AuthContext';
 import { CheckCircle2, Clock, PlayCircle, AlertCircle } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [myTasks, setMyTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,7 +58,7 @@ export const StudentDashboard: React.FC = () => {
       {/* Task Summary */}
       <div className="lg:col-span-2 space-y-6">
         <div className="grid grid-cols-3 gap-4">
-          <Card className="bg-white dark:bg-slate-900">
+          <Card className="bg-white dark:bg-slate-900 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/projects')}>
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -70,7 +71,7 @@ export const StudentDashboard: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white dark:bg-slate-900">
+          <Card className="bg-white dark:bg-slate-900 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/projects')}>
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -83,7 +84,7 @@ export const StudentDashboard: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-white dark:bg-slate-900">
+          <Card className="bg-white dark:bg-slate-900 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/projects')}>
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -111,7 +112,7 @@ export const StudentDashboard: React.FC = () => {
                 <div className="text-center py-8 text-slate-500 dark:text-slate-400">No tasks assigned to you.</div>
               ) : (
                 myTasks.map(task => (
-                  <div key={task.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors">
+                  <Link key={task.id} to={`/projects/${task.projectId}`} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
                     <div className="flex items-center gap-4">
                       {getStatusIcon(task.status)}
                       <div>
@@ -125,7 +126,7 @@ export const StudentDashboard: React.FC = () => {
                     <div>
                       {getPriorityBadge(task.priority)}
                     </div>
-                  </div>
+                  </Link>
                 ))
               )}
             </div>
@@ -145,7 +146,7 @@ export const StudentDashboard: React.FC = () => {
             ) : myProjects.map(project => (
               <div key={project.id} className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="font-medium text-slate-900 dark:text-slate-100">{project.title}</span>
+                  <Link to={`/projects/${project.id}`} className="font-medium text-slate-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">{project.title}</Link>
                   <span className="text-slate-500 dark:text-slate-400">{project.progress}%</span>
                 </div>
                 <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">

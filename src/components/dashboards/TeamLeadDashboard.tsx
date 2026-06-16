@@ -5,12 +5,13 @@ import type { Project, Task, User } from '../../lib/types';
 import { useAuth } from '../../context/AuthContext';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Plus, Users, LayoutList } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 const COLORS = ['#6366f1', '#f59e0b', '#10b981'];
 
 export const TeamLeadDashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [teamMembers, setTeamMembers] = useState<User[]>([]);
   const [teamTasks, setTeamTasks] = useState<Task[]>([]);
@@ -59,7 +60,7 @@ export const TeamLeadDashboard: React.FC = () => {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Quick Stats & Actions */}
       <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/projects')}>
           <CardContent className="p-6 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Active Projects</p>
@@ -70,7 +71,7 @@ export const TeamLeadDashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/projects')}>
           <CardContent className="p-6 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Team Members</p>

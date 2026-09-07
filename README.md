@@ -1,4 +1,9 @@
 # ProjectFlow
+## 🚀 Project Demo
+
+The demo below showcases the project in action, demonstrating its core functionality, system operation, and real-time performance.
+![image alt](
+
 ## Manage your academic projects seamlessly
 
 A web platform that helps students manage and monitor project progress and record feedback from teachers. Team leads can create projects, break them down into tasks, and assign responsibilities to individual members while members can update their task progress.

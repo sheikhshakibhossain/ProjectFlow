@@ -2,7 +2,7 @@
 ## 🚀 Project Demo
 
 The demo below showcases the project in action, demonstrating its core functionality, system operation, and real-time performance.
-![image alt](
+![image alt](https://github.com/sheikhshakibhossain/ProjectFlow/blob/5cd7aaf17b0ab6c81dab0a23a427910e4e29793d/demo.gif)
 
 ## Manage your academic projects seamlessly
 
